@@ -1,39 +1,94 @@
 services:
   mysql:
     image: mysql:8.4
-    container_name: plip-template-mysql
+    container_name: plip-diary-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-plip_template}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-plip_diary}
     ports:
-      - "3308:3306"
+      - "${MYSQL_PORT:-3308}:3306"
     volumes:
-      - plip_template_mysql_data:/var/lib/mysql
+      - plip_diary_mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "127.0.0.1",
+          "-uroot",
+          "-p$$MYSQL_ROOT_PASSWORD",
+        ]
       interval: 5s
       timeout: 5s
       retries: 20
       start_period: 20s
 
-#  app:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    container_name: plip-template-app
-#    restart: unless-stopped
-#    depends_on:
-#      mysql:
-#        condition: service_healthy
-#    environment:
-#      SPRING_PROFILES_ACTIVE: docker
-#      DB_USERNAME: ${DB_USERNAME:-root}
-#      DB_PASSWORD: ${DB_PASSWORD}
-#      SERVER_PORT: ${SERVER_PORT:-8080}
-#      MYSQL_DATABASE: ${MYSQL_DATABASE:-plip_template}
-#    ports:
-#      - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
+  redis:
+    image: redis:7-alpine
+    container_name: plip-diary-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: plip-diary-kafka
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plip-diary-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SERVER_PORT: ${SERVER_PORT:-8081}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-plip_diary}
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "${SERVER_PORT:-8081}:${SERVER_PORT:-8081}"
+    develop:
+      watch:
+        - path: ./src/main
+          action: rebuild
+        - path: ./build.gradle
+          action: rebuild
 
 volumes:
-  plip_template_mysql_data:
+  plip_diary_mysql_data:
