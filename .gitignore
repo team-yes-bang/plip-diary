@@ -36,5 +36,11 @@ out/
 ### VS Code ###
 .vscode/
 
+### Cursor ###
+.cursor/
+
 ### Local secrets ###
 .env
+
+### Application resources (로컬·환경별 설정) ###
+src/main/resources/

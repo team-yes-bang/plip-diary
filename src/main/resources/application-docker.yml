@@ -1,22 +1,26 @@
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT:8081}
 
 spring:
   datasource:
-    # Compose 서비스명 `mysql` (호스트 localhost 가 아님)
-    url: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:plip_template}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    url: jdbc:mysql://${MYSQL_HOST:mysql}:${MYSQL_PORT:3306}/${MYSQL_DATABASE:plip_diary}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
 
 eureka:
   instance:
-    # plip-net Compose DNS — Gateway 컨테이너에서 template:8080 으로 접근
-    hostname: template
+    hostname: diary
     prefer-ip-address: false
     instance-id: ${spring.application.name}:docker:${server.port}
   client:
-    enabled: true
+    enabled: false
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka-server:8761/eureka/}
