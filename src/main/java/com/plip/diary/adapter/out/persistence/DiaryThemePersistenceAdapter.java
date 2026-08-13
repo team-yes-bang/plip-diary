@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -27,5 +28,10 @@ public class DiaryThemePersistenceAdapter implements DiaryThemePersistencePort {
     public Optional<DiaryTheme> findById(Long themeId) {
         return diaryThemeJpaRepository.findById(themeId)
                 .map(diaryPersistenceMapper::toDomain);
+    }
+
+    @Override
+    public boolean existsActiveByUserUuidAndName(UUID userUuid, String name) {
+        return diaryThemeJpaRepository.existsByUserUuidAndNameAndDeletedAtIsNull(userUuid, name);
     }
 }
