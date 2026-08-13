@@ -1,0 +1,7 @@
+package com.plip.diary.adapter.out.persistence.repository;
+
+import com.plip.diary.adapter.out.persistence.entity.DiaryVideoEntity;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface DiaryVideoJpaRepository extends JpaRepository<DiaryVideoEntity, Long> {
+}
