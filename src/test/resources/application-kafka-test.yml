@@ -1,0 +1,12 @@
+spring:
+  kafka:
+    consumer:
+      group-id: diary-service-test
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+
+app:
+  kafka:
+    topics:
+      user-registered: user.registered
