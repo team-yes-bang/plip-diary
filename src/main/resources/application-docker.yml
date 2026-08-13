@@ -7,20 +7,13 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
-  data:
-    redis:
-      host: ${REDIS_HOST:redis}
-      port: ${REDIS_PORT:6379}
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    show-sql: false
 
 eureka:
   instance:
-    hostname: diary
     prefer-ip-address: false
-    instance-id: ${spring.application.name}:docker:${server.port}
+    hostname: diary
   client:
     enabled: false
     service-url:
-      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka-server:8761/eureka/}
+      defaultZone: http://eureka-server:8761/eureka/

@@ -2,7 +2,7 @@ spring:
   application:
     name: diary
   profiles:
-    active: local
+    active: docker
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: ${DB_USERNAME}
@@ -11,6 +11,12 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
 eureka:
   instance:
@@ -18,6 +24,6 @@ eureka:
     lease-renewal-interval-in-seconds: 5
     lease-expiration-duration-in-seconds: 10
   client:
-    enabled: true # 공통(dev 등) 기본 연동. local/docker 프로필에서 false
+    enabled: true
     register-with-eureka: true
     fetch-registry: true
