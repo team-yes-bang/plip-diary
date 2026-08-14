@@ -76,13 +76,15 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       SERVER_PORT: ${SERVER_PORT:-8081}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-plip_diary}
-      MYSQL_HOST: mysql
-      MYSQL_PORT: 3306
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MYSQL_HOST: ${MYSQL_HOST:-mysql}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
     ports:
       - "${SERVER_PORT:-8081}:${SERVER_PORT:-8081}"
+    networks:
+      - default
+      - plip-user
     develop:
       watch:
         - path: ./src/main
@@ -92,3 +94,8 @@ services:
 
 volumes:
   plip_diary_mysql_data:
+
+networks:
+  plip-user:
+    external: true
+    name: plip-user_default

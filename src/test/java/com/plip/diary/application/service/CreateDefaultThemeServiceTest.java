@@ -30,7 +30,7 @@ class CreateDefaultThemeServiceTest {
     @Test
     void createDefaultTheme_savesWhenNotExists() {
         UUID userUuid = UUID.randomUUID();
-        when(diaryThemePersistencePort.existsActiveByUserUuidAndName(userUuid, CreateDefaultThemeService.DEFAULT_THEME_NAME))
+        when(diaryThemePersistencePort.existsByUserUuidAndName(userUuid, CreateDefaultThemeService.DEFAULT_THEME_NAME))
                 .thenReturn(false);
 
         createDefaultThemeService.createDefaultTheme(userUuid);
@@ -45,13 +45,13 @@ class CreateDefaultThemeServiceTest {
     @Test
     void createDefaultTheme_skipsWhenAlreadyExists() {
         UUID userUuid = UUID.randomUUID();
-        when(diaryThemePersistencePort.existsActiveByUserUuidAndName(userUuid, CreateDefaultThemeService.DEFAULT_THEME_NAME))
+        when(diaryThemePersistencePort.existsByUserUuidAndName(userUuid, CreateDefaultThemeService.DEFAULT_THEME_NAME))
                 .thenReturn(true);
 
         createDefaultThemeService.createDefaultTheme(userUuid);
 
         verify(diaryThemePersistencePort, never()).save(any());
-        verify(diaryThemePersistencePort).existsActiveByUserUuidAndName(
+        verify(diaryThemePersistencePort).existsByUserUuidAndName(
                 eq(userUuid),
                 eq(CreateDefaultThemeService.DEFAULT_THEME_NAME)
         );

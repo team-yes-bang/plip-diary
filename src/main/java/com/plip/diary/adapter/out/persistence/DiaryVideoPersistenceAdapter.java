@@ -20,7 +20,7 @@ public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
 
     @Override
     public DiaryVideo save(DiaryVideo video) {
-        var themeEntity = diaryThemeJpaRepository.findById(video.getThemeId())
+        var themeEntity = diaryThemeJpaRepository.findByThemeIdAndDeletedAtIsNull(video.getThemeId())
                 .orElseThrow(() -> new IllegalArgumentException("Theme not found: " + video.getThemeId()));
         var entity = diaryPersistenceMapper.toEntity(video, themeEntity);
         var saved = diaryVideoJpaRepository.save(entity);
@@ -29,7 +29,7 @@ public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
 
     @Override
     public Optional<DiaryVideo> findById(Long diaryVideoId) {
-        return diaryVideoJpaRepository.findById(diaryVideoId)
+        return diaryVideoJpaRepository.findByDiaryVideoIdAndDeletedAtIsNull(diaryVideoId)
                 .map(diaryPersistenceMapper::toDomain);
     }
 }
