@@ -1,4 +1,18 @@
+# 로컬 통합-like 환경 — plip-develop-env infra 와 동일한 서비스명·네트워크(plip-net)
+# 실행: docker compose up -d --build
+include:
+  - docker-compose.app.yml
+
 services:
+  diary:
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
   mysql:
     image: mysql:8.4
     container_name: plip-diary-mysql
@@ -25,6 +39,8 @@ services:
       timeout: 5s
       retries: 20
       start_period: 20s
+    networks:
+      - plip-net
 
   redis:
     image: redis:7-alpine
@@ -37,6 +53,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    networks:
+      - plip-net
 
   kafka:
     image: apache/kafka:3.8.0
@@ -56,46 +74,12 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: plip-diary-app
-    restart: unless-stopped
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_started
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      DB_USERNAME: ${DB_USERNAME:-root}
-      DB_PASSWORD: ${DB_PASSWORD}
-      SERVER_PORT: ${SERVER_PORT:-8081}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-plip_diary}
-      MYSQL_HOST: ${MYSQL_HOST:-mysql}
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
-      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
-    ports:
-      - "${SERVER_PORT:-8081}:${SERVER_PORT:-8081}"
     networks:
-      - default
-      - plip-user
-    develop:
-      watch:
-        - path: ./src/main
-          action: rebuild
-        - path: ./build.gradle
-          action: rebuild
+      - plip-net
 
 volumes:
   plip_diary_mysql_data:
 
 networks:
-  plip-user:
-    external: true
-    name: plip-user_default
+  plip-net:
+    name: plip-net

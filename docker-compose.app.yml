@@ -1,0 +1,37 @@
+# 애플리케이션 컨테이너 SSOT — plip-develop-env docker-compose.services.yml include 대상
+# 로컬 전체 기동은 docker-compose.yml (include) 사용
+services:
+  diary:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: plip-service-diary
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: ${SERVER_PORT:-8081}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-plip_diary}
+      MYSQL_HOST: ${MYSQL_HOST:-mysql}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      EUREKA_CLIENT_ENABLED: ${EUREKA_CLIENT_ENABLED:-false}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:-http://eureka-server:8761/eureka/}
+      EUREKA_INSTANCE_HOSTNAME: diary
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+    ports:
+      - "${SERVER_PORT:-8081}:${SERVER_PORT:-8081}"
+    networks:
+      - plip-net
+    develop:
+      watch:
+        - path: ./src/main
+          action: rebuild
+        - path: ./build.gradle
+          action: rebuild
+
+networks:
+  plip-net:
+    name: plip-net
