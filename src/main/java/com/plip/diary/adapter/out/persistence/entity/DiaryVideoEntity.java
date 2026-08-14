@@ -64,4 +64,8 @@ public class DiaryVideoEntity {
     void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+    public void markDeleted() {
+        this.deletedAt = LocalDateTime.now();
+    }
 }

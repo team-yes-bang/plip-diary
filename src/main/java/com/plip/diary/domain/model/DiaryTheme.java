@@ -47,6 +47,10 @@ public class DiaryTheme {
         return deletedAt == null;
     }
 
+    public DiaryTheme rename(String name) {
+        return new DiaryTheme(themeId, userUuid, name, createdAt, updatedAt, deletedAt);
+    }
+
     public Long getThemeId() {
         return themeId;
     }

@@ -20,7 +20,7 @@ public class CreateDefaultThemeService implements CreateDefaultThemeUseCase {
     @Override
     @Transactional
     public void createDefaultTheme(UUID userUuid) {
-        if (diaryThemePersistencePort.existsActiveByUserUuidAndName(userUuid, DEFAULT_THEME_NAME)) {
+        if (diaryThemePersistencePort.existsByUserUuidAndName(userUuid, DEFAULT_THEME_NAME)) {
             return;
         }
         diaryThemePersistencePort.save(DiaryTheme.create(userUuid, DEFAULT_THEME_NAME));

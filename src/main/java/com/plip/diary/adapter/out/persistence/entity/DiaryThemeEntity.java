@@ -73,4 +73,14 @@ public class DiaryThemeEntity {
     void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void rename(String name) {
+        this.name = name;
+    }
+
+    public void markDeleted() {
+        LocalDateTime now = LocalDateTime.now();
+        this.deletedAt = now;
+        this.updatedAt = now;
+    }
 }

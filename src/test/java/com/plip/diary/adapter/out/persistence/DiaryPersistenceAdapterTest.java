@@ -43,6 +43,15 @@ class DiaryPersistenceAdapterTest {
     }
 
     @Test
+    void findById_excludesSoftDeleted() {
+        UUID userUuid = UUID.randomUUID();
+        DiaryTheme saved = diaryThemePersistenceAdapter.save(DiaryTheme.create(userUuid, "일상"));
+        diaryThemePersistenceAdapter.softDeleteWithVideos(saved.getThemeId());
+
+        assertThat(diaryThemePersistenceAdapter.findById(saved.getThemeId())).isEmpty();
+    }
+
+    @Test
     void saveAndFindVideo() {
         DiaryTheme theme = diaryThemePersistenceAdapter.save(
                 DiaryTheme.create(UUID.randomUUID(), "일상")
