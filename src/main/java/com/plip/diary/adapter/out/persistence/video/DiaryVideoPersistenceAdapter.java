@@ -7,7 +7,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.plip.diary.global.time.KstDateTimes;
+
+import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -30,6 +34,18 @@ public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
     public Optional<DiaryVideo> findById(Long id) {
         return diaryVideoSpringDataRepository.findByIdAndDeletedAtIsNull(id)
                 .map(diaryVideoMapper::toDomain);
+    }
+
+    @Override
+    public boolean existsByThemeIdAndVideoUuid(Long themeId, UUID videoUuid) {
+        return diaryVideoSpringDataRepository.existsByThemeIdAndVideoUuidAndDeletedAtIsNull(themeId, videoUuid);
+    }
+
+    @Override
+    public long countTodayByUserUuid(UUID userUuid) {
+        LocalDateTime start = KstDateTimes.startOfTodayKstAsUtcLocalDateTime();
+        LocalDateTime end = KstDateTimes.startOfTomorrowKstAsUtcLocalDateTime();
+        return diaryVideoSpringDataRepository.countTodayByUserUuid(userUuid, start, end);
     }
 
     @Override

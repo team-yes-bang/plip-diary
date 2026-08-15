@@ -51,6 +51,7 @@ dependencyManagement {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	maxParallelForks = 1
 }
 
 sourceSets {

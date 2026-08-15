@@ -10,3 +10,4 @@ app:
   kafka:
     topics:
       user-registered: user.registered
+      video-uploaded: video.uploaded
