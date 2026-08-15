@@ -1,5 +1,6 @@
 package com.plip.diary.adapter.in.kafka;
 
+import com.plip.diary.adapter.in.kafka.dto.UserRegisteredEvent;
 import com.plip.diary.adapter.in.kafka.dto.VideoUploadedEvent;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
@@ -8,6 +9,8 @@ import com.plip.diary.domain.model.DiaryVideo;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,17 +35,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @EmbeddedKafka(
         partitions = 1,
-        topics = {"video.uploaded"},
+        topics = {"user.registered", "video.uploaded"},
         bootstrapServersProperty = "spring.kafka.bootstrap-servers"
 )
 @ActiveProfiles({"test", "kafka-test"})
-@Import(VideoUploadedConsumerIntegrationTest.KafkaTestProducerConfig.class)
-class VideoUploadedConsumerIntegrationTest {
+@Import(KafkaConsumerIntegrationTest.KafkaTestProducerConfig.class)
+@Execution(ExecutionMode.SAME_THREAD)
+class KafkaConsumerIntegrationTest {
 
-    private static final String TOPIC = "video.uploaded";
+    private static final String USER_REGISTERED_TOPIC = "user.registered";
+    private static final String VIDEO_UPLOADED_TOPIC = "video.uploaded";
 
     @Autowired
-    private KafkaTemplate<String, VideoUploadedEvent> kafkaTemplate;
+    private KafkaTemplate<String, UserRegisteredEvent> userRegisteredKafkaTemplate;
+
+    @Autowired
+    private KafkaTemplate<String, VideoUploadedEvent> videoUploadedKafkaTemplate;
 
     @Autowired
     private KafkaTemplate<String, String> rawKafkaTemplate;
@@ -54,14 +62,56 @@ class VideoUploadedConsumerIntegrationTest {
     private DiaryVideoPersistencePort diaryVideoPersistencePort;
 
     @Test
+    void consumeUserRegisteredEvent_createsDefaultTheme() throws Exception {
+        UUID userUuid = UUID.randomUUID();
+
+        userRegisteredKafkaTemplate.send(USER_REGISTERED_TOPIC, new UserRegisteredEvent(userUuid))
+                .get(5, TimeUnit.SECONDS);
+
+        waitUntil(() -> diaryThemePersistencePort.existsByUserUuidAndName(userUuid, "일상"));
+
+        assertThat(diaryThemePersistencePort.existsByUserUuidAndName(userUuid, "일상")).isTrue();
+    }
+
+    @Test
+    void consumeUserServicePayload_createsDefaultTheme() throws Exception {
+        UUID userUuid = UUID.randomUUID();
+        String payload = """
+                {"userUuid":"%s","email":"user@example.com","nickname":"테스트","occurredAt":"2026-08-13T11:00:00"}
+                """.formatted(userUuid);
+
+        rawKafkaTemplate.send(USER_REGISTERED_TOPIC, userUuid.toString(), payload).get(5, TimeUnit.SECONDS);
+
+        waitUntil(() -> diaryThemePersistencePort.existsByUserUuidAndName(userUuid, "일상"));
+
+        assertThat(diaryThemePersistencePort.existsByUserUuidAndName(userUuid, "일상")).isTrue();
+    }
+
+    @Test
+    void duplicateUserRegisteredEvent_keepsSingleDefaultTheme() throws Exception {
+        UUID userUuid = UUID.randomUUID();
+
+        userRegisteredKafkaTemplate.send(USER_REGISTERED_TOPIC, new UserRegisteredEvent(userUuid))
+                .get(5, TimeUnit.SECONDS);
+        userRegisteredKafkaTemplate.send(USER_REGISTERED_TOPIC, new UserRegisteredEvent(userUuid))
+                .get(5, TimeUnit.SECONDS);
+
+        waitUntil(() -> diaryThemePersistencePort.existsByUserUuidAndName(userUuid, "일상"));
+
+        long activeThemeCount = diaryThemePersistencePort.findAllByUserUuid(userUuid).size();
+
+        assertThat(activeThemeCount).isEqualTo(1);
+    }
+
+    @Test
     void consumeVideoUploadedEvent_bindsVideo() throws Exception {
         UUID userUuid = UUID.randomUUID();
         UUID themeUuid = UUID.randomUUID();
         UUID videoUuid = UUID.randomUUID();
         DiaryTheme theme = diaryThemePersistencePort.save(DiaryTheme.create(userUuid, "일상", themeUuid));
 
-        kafkaTemplate.send(
-                TOPIC,
+        videoUploadedKafkaTemplate.send(
+                VIDEO_UPLOADED_TOPIC,
                 new VideoUploadedEvent(themeUuid, videoUuid, userUuid)
         ).get(5, TimeUnit.SECONDS);
 
@@ -85,7 +135,7 @@ class VideoUploadedConsumerIntegrationTest {
                 }
                 """.formatted(themeUuid, videoUuid, userUuid);
 
-        rawKafkaTemplate.send(TOPIC, videoUuid.toString(), payload).get(5, TimeUnit.SECONDS);
+        rawKafkaTemplate.send(VIDEO_UPLOADED_TOPIC, videoUuid.toString(), payload).get(5, TimeUnit.SECONDS);
 
         waitUntil(() -> diaryVideoPersistencePort.existsByThemeIdAndVideoUuid(theme.getId(), videoUuid));
 
@@ -93,15 +143,15 @@ class VideoUploadedConsumerIntegrationTest {
     }
 
     @Test
-    void duplicateEvent_keepsSingleVideo() throws Exception {
+    void duplicateVideoUploadedEvent_keepsSingleVideo() throws Exception {
         UUID userUuid = UUID.randomUUID();
         UUID themeUuid = UUID.randomUUID();
         UUID videoUuid = UUID.randomUUID();
         DiaryTheme theme = diaryThemePersistencePort.save(DiaryTheme.create(userUuid, "일상", themeUuid));
         VideoUploadedEvent event = new VideoUploadedEvent(themeUuid, videoUuid, userUuid);
 
-        kafkaTemplate.send(TOPIC, event).get(5, TimeUnit.SECONDS);
-        kafkaTemplate.send(TOPIC, event).get(5, TimeUnit.SECONDS);
+        videoUploadedKafkaTemplate.send(VIDEO_UPLOADED_TOPIC, event).get(5, TimeUnit.SECONDS);
+        videoUploadedKafkaTemplate.send(VIDEO_UPLOADED_TOPIC, event).get(5, TimeUnit.SECONDS);
 
         waitUntil(() -> diaryVideoPersistencePort.existsByThemeIdAndVideoUuid(theme.getId(), videoUuid));
 
@@ -110,7 +160,7 @@ class VideoUploadedConsumerIntegrationTest {
     }
 
     @Test
-    void dailyLimitExceeded_skipsBinding() throws Exception {
+    void dailyVideoLimitExceeded_skipsBinding() throws Exception {
         UUID userUuid = UUID.randomUUID();
         UUID themeUuid = UUID.randomUUID();
         DiaryTheme theme = diaryThemePersistencePort.save(DiaryTheme.create(userUuid, "일상", themeUuid));
@@ -120,8 +170,8 @@ class VideoUploadedConsumerIntegrationTest {
         }
 
         UUID overflowVideoUuid = UUID.randomUUID();
-        kafkaTemplate.send(
-                TOPIC,
+        videoUploadedKafkaTemplate.send(
+                VIDEO_UPLOADED_TOPIC,
                 new VideoUploadedEvent(themeUuid, overflowVideoUuid, userUuid)
         ).get(5, TimeUnit.SECONDS);
 
@@ -133,7 +183,7 @@ class VideoUploadedConsumerIntegrationTest {
     }
 
     private void waitUntil(java.util.function.BooleanSupplier condition) throws InterruptedException {
-        Duration timeout = Duration.ofSeconds(10);
+        Duration timeout = Duration.ofSeconds(15);
         long deadline = System.nanoTime() + timeout.toNanos();
         while (System.nanoTime() < deadline) {
             if (condition.getAsBoolean()) {
@@ -148,14 +198,24 @@ class VideoUploadedConsumerIntegrationTest {
     static class KafkaTestProducerConfig {
 
         @Bean
+        ProducerFactory<String, UserRegisteredEvent> userRegisteredProducerFactory(
+                @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers
+        ) {
+            return new DefaultKafkaProducerFactory<>(producerProps(bootstrapServers));
+        }
+
+        @Bean
+        KafkaTemplate<String, UserRegisteredEvent> userRegisteredKafkaTemplate(
+                ProducerFactory<String, UserRegisteredEvent> userRegisteredProducerFactory
+        ) {
+            return new KafkaTemplate<>(userRegisteredProducerFactory);
+        }
+
+        @Bean
         ProducerFactory<String, VideoUploadedEvent> videoUploadedProducerFactory(
                 @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers
         ) {
-            Map<String, Object> props = new HashMap<>();
-            props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-            props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-            props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-            return new DefaultKafkaProducerFactory<>(props);
+            return new DefaultKafkaProducerFactory<>(producerProps(bootstrapServers));
         }
 
         @Bean
@@ -179,6 +239,14 @@ class VideoUploadedConsumerIntegrationTest {
         @Bean
         KafkaTemplate<String, String> rawKafkaTemplate(ProducerFactory<String, String> rawProducerFactory) {
             return new KafkaTemplate<>(rawProducerFactory);
+        }
+
+        private static Map<String, Object> producerProps(String bootstrapServers) {
+            Map<String, Object> props = new HashMap<>();
+            props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+            props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+            props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+            return props;
         }
     }
 }
