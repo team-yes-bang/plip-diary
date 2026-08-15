@@ -13,6 +13,19 @@ interface DiaryVideoSpringDataRepository extends JpaRepository<DiaryVideoJpaEnti
 
     Optional<DiaryVideoJpaEntity> findByIdAndDeletedAtIsNull(Long id);
 
+    @Query("""
+            SELECT v FROM DiaryVideoJpaEntity v, DiaryThemeJpaEntity t
+            WHERE v.id = :id
+            AND v.themeId = t.id
+            AND t.userUuid = :userUuid
+            AND v.deletedAt IS NULL
+            AND t.deletedAt IS NULL
+            """)
+    Optional<DiaryVideoJpaEntity> findByIdAndUserUuid(
+            @Param("id") Long id,
+            @Param("userUuid") UUID userUuid
+    );
+
     List<DiaryVideoJpaEntity> findByThemeIdAndDeletedAtIsNull(Long themeId);
 
     boolean existsByThemeIdAndVideoUuidAndDeletedAtIsNull(Long themeId, UUID videoUuid);

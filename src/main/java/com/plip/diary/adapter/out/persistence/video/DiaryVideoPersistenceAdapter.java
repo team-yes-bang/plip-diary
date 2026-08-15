@@ -37,6 +37,12 @@ public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
     }
 
     @Override
+    public Optional<DiaryVideo> findByIdAndUserUuid(Long id, UUID userUuid) {
+        return diaryVideoSpringDataRepository.findByIdAndUserUuid(id, userUuid)
+                .map(diaryVideoMapper::toDomain);
+    }
+
+    @Override
     public boolean existsByThemeIdAndVideoUuid(Long themeId, UUID videoUuid) {
         return diaryVideoSpringDataRepository.existsByThemeIdAndVideoUuidAndDeletedAtIsNull(themeId, videoUuid);
     }
@@ -53,5 +59,12 @@ public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
     public void softDeleteAllByThemeId(Long themeId) {
         diaryVideoSpringDataRepository.findByThemeIdAndDeletedAtIsNull(themeId)
                 .forEach(DiaryVideoJpaEntity::markDeleted);
+    }
+
+    @Override
+    @Transactional
+    public void softDelete(Long id) {
+        diaryVideoSpringDataRepository.findById(id)
+                .ifPresent(DiaryVideoJpaEntity::markDeleted);
     }
 }

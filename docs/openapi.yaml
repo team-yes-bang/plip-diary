@@ -9,6 +9,8 @@ servers:
 tags:
 - name: Theme
   description: 다이어리 테마 API
+- name: Diary Video
+  description: 다이어리 영상 API
 paths:
   /api/diaries/themes:
     get:
@@ -138,6 +140,30 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ThemeResponse"
+  /api/diaries/videos/{diaryVideoId}:
+    delete:
+      tags:
+      - Diary Video
+      summary: 다이어리 영상 바인딩 해제
+      description: 타임라인에서 영상 항목 제거. `diary_videos` Soft Delete 후 `diary.video.deleted`
+        Kafka 발행.
+      operationId: unbindDiaryVideo
+      parameters:
+      - name: X-User-Uuid
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: diaryVideoId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: OK
 components:
   schemas:
     CreateThemeRequest:
