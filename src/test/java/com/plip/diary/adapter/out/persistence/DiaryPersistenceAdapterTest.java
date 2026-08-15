@@ -75,4 +75,28 @@ class DiaryPersistenceAdapterTest {
         assertThat(found.getId()).isEqualTo(saved.getId());
         assertThat(found.getVideoUuid()).isEqualTo(videoUuid);
     }
+
+    @Test
+    void existsByThemeIdAndVideoUuid() {
+        DiaryTheme theme = diaryThemePersistenceAdapter.save(
+                DiaryTheme.create(UUID.randomUUID(), "일상", UUID.randomUUID())
+        );
+        UUID videoUuid = UUID.randomUUID();
+        diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), videoUuid));
+
+        assertThat(diaryVideoPersistenceAdapter.existsByThemeIdAndVideoUuid(theme.getId(), videoUuid)).isTrue();
+        assertThat(diaryVideoPersistenceAdapter.existsByThemeIdAndVideoUuid(theme.getId(), UUID.randomUUID())).isFalse();
+    }
+
+    @Test
+    void countTodayByUserUuid() {
+        UUID userUuid = UUID.randomUUID();
+        DiaryTheme theme = diaryThemePersistenceAdapter.save(
+                DiaryTheme.create(userUuid, "일상", UUID.randomUUID())
+        );
+        diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
+        diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
+
+        assertThat(diaryVideoPersistenceAdapter.countTodayByUserUuid(userUuid)).isEqualTo(2);
+    }
 }

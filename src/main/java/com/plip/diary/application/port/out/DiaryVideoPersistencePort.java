@@ -3,6 +3,7 @@ package com.plip.diary.application.port.out;
 import com.plip.diary.domain.model.DiaryVideo;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * diary_videos 영속성 포트.
@@ -13,6 +14,10 @@ public interface DiaryVideoPersistencePort {
     DiaryVideo save(DiaryVideo video);
 
     Optional<DiaryVideo> findById(Long id);
+
+    boolean existsByThemeIdAndVideoUuid(Long themeId, UUID videoUuid);
+
+    long countTodayByUserUuid(UUID userUuid);
 
     void softDeleteAllByThemeId(Long themeId);
 }

@@ -7,11 +7,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final DiaryVideoSpringDataRepository diaryVideoSpringDataRepository;
     private final DiaryThemePersistencePort diaryThemePersistencePort;
@@ -30,6 +36,19 @@ public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
     public Optional<DiaryVideo> findById(Long id) {
         return diaryVideoSpringDataRepository.findByIdAndDeletedAtIsNull(id)
                 .map(diaryVideoMapper::toDomain);
+    }
+
+    @Override
+    public boolean existsByThemeIdAndVideoUuid(Long themeId, UUID videoUuid) {
+        return diaryVideoSpringDataRepository.existsByThemeIdAndVideoUuidAndDeletedAtIsNull(themeId, videoUuid);
+    }
+
+    @Override
+    public long countTodayByUserUuid(UUID userUuid) {
+        LocalDate todayKst = LocalDate.now(KST);
+        LocalDateTime start = todayKst.atStartOfDay(KST).toLocalDateTime();
+        LocalDateTime end = todayKst.plusDays(1).atStartOfDay(KST).toLocalDateTime();
+        return diaryVideoSpringDataRepository.countTodayByUserUuid(userUuid, start, end);
     }
 
     @Override
