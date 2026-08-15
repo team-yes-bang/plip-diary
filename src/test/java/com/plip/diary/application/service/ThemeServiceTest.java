@@ -1,11 +1,13 @@
 package com.plip.diary.application.service;
 
-import com.plip.diary.application.exception.ErrorCode;
-import com.plip.diary.application.exception.ThemeLastRemainingException;
-import com.plip.diary.application.exception.ThemeLimitExceededException;
-import com.plip.diary.application.exception.ThemeNameDuplicateException;
-import com.plip.diary.application.exception.ThemeNotFoundException;
+import com.plip.diary.global.exception.ErrorCode;
+import com.plip.diary.global.exception.ThemeLastRemainingException;
+import com.plip.diary.global.exception.ThemeLimitExceededException;
+import com.plip.diary.global.exception.ThemeNameDuplicateException;
+import com.plip.diary.global.exception.ThemeNotFoundException;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
+import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
+import com.plip.diary.application.port.out.UuidGeneratorPort;
 import com.plip.diary.domain.model.DiaryTheme;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +33,12 @@ class ThemeServiceTest {
     @Mock
     private DiaryThemePersistencePort diaryThemePersistencePort;
 
+    @Mock
+    private DiaryVideoPersistencePort diaryVideoPersistencePort;
+
+    @Mock
+    private UuidGeneratorPort uuidGeneratorPort;
+
     @InjectMocks
     private ThemeService themeService;
 
@@ -38,7 +46,7 @@ class ThemeServiceTest {
 
     @Test
     void listThemes_returnsThemes() {
-        DiaryTheme theme = DiaryTheme.reconstitute(1L, userUuid, "일상",
+        DiaryTheme theme = DiaryTheme.reconstitute(1L, UUID.randomUUID(), userUuid, "일상",
                 LocalDateTime.now(), LocalDateTime.now(), null);
         when(diaryThemePersistencePort.findAllByUserUuid(userUuid)).thenReturn(List.of(theme));
 
@@ -50,24 +58,24 @@ class ThemeServiceTest {
 
     @Test
     void getTheme_success() {
-        Long themeId = 1L;
-        DiaryTheme theme = DiaryTheme.reconstitute(themeId, userUuid, "일상",
+        Long id = 1L;
+        DiaryTheme theme = DiaryTheme.reconstitute(id, UUID.randomUUID(), userUuid, "일상",
                 LocalDateTime.now(), LocalDateTime.now(), null);
-        when(diaryThemePersistencePort.findByIdAndUserUuid(themeId, userUuid))
+        when(diaryThemePersistencePort.findByIdAndUserUuid(id, userUuid))
                 .thenReturn(Optional.of(theme));
 
-        DiaryTheme found = themeService.getTheme(userUuid, themeId);
+        DiaryTheme found = themeService.getTheme(userUuid, id);
 
-        assertThat(found.getThemeId()).isEqualTo(themeId);
+        assertThat(found.getId()).isEqualTo(id);
     }
 
     @Test
     void getTheme_notFound() {
-        Long themeId = 99L;
-        when(diaryThemePersistencePort.findByIdAndUserUuid(themeId, userUuid))
+        Long id = 99L;
+        when(diaryThemePersistencePort.findByIdAndUserUuid(id, userUuid))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> themeService.getTheme(userUuid, themeId))
+        assertThatThrownBy(() -> themeService.getTheme(userUuid, id))
                 .isInstanceOf(ThemeNotFoundException.class);
     }
 
@@ -84,15 +92,15 @@ class ThemeServiceTest {
 
     @Test
     void updateTheme_duplicateName() {
-        Long themeId = 2L;
-        DiaryTheme existing = DiaryTheme.reconstitute(themeId, userUuid, "여행",
+        Long id = 2L;
+        DiaryTheme existing = DiaryTheme.reconstitute(id, UUID.randomUUID(), userUuid, "여행",
                 LocalDateTime.now(), LocalDateTime.now(), null);
-        when(diaryThemePersistencePort.findByIdAndUserUuid(themeId, userUuid))
+        when(diaryThemePersistencePort.findByIdAndUserUuid(id, userUuid))
                 .thenReturn(Optional.of(existing));
-        when(diaryThemePersistencePort.existsByUserUuidAndNameExcludingThemeId(userUuid, "일상", themeId))
+        when(diaryThemePersistencePort.existsByUserUuidAndNameExcludingId(userUuid, "일상", id))
                 .thenReturn(true);
 
-        assertThatThrownBy(() -> themeService.updateTheme(userUuid, themeId, "일상"))
+        assertThatThrownBy(() -> themeService.updateTheme(userUuid, id, "일상"))
                 .isInstanceOf(ThemeNameDuplicateException.class);
 
         verify(diaryThemePersistencePort, never()).save(any());
@@ -100,17 +108,19 @@ class ThemeServiceTest {
 
     @Test
     void createTheme_success() {
+        UUID themeUuid = UUID.randomUUID();
         when(diaryThemePersistencePort.countByUserUuid(userUuid)).thenReturn(2L);
         when(diaryThemePersistencePort.existsByUserUuidAndName(userUuid, "여행")).thenReturn(false);
+        when(uuidGeneratorPort.generate()).thenReturn(themeUuid);
         when(diaryThemePersistencePort.save(any(DiaryTheme.class))).thenAnswer(invocation -> {
             DiaryTheme theme = invocation.getArgument(0);
-            return DiaryTheme.reconstitute(10L, theme.getUserUuid(), theme.getName(),
+            return DiaryTheme.reconstitute(10L, theme.getThemeUuid(), theme.getUserUuid(), theme.getName(),
                     LocalDateTime.now(), LocalDateTime.now(), null);
         });
 
         DiaryTheme created = themeService.createTheme(userUuid, "여행");
 
-        assertThat(created.getThemeId()).isEqualTo(10L);
+        assertThat(created.getId()).isEqualTo(10L);
         assertThat(created.getName()).isEqualTo("여행");
     }
 
@@ -127,68 +137,71 @@ class ThemeServiceTest {
 
     @Test
     void updateTheme_success() {
-        Long themeId = 1L;
-        DiaryTheme existing = DiaryTheme.reconstitute(themeId, userUuid, "일상",
+        Long id = 1L;
+        DiaryTheme existing = DiaryTheme.reconstitute(id, UUID.randomUUID(), userUuid, "일상",
                 LocalDateTime.now(), LocalDateTime.now(), null);
-        when(diaryThemePersistencePort.findByIdAndUserUuid(themeId, userUuid))
+        when(diaryThemePersistencePort.findByIdAndUserUuid(id, userUuid))
                 .thenReturn(Optional.of(existing));
-        when(diaryThemePersistencePort.existsByUserUuidAndNameExcludingThemeId(userUuid, "여행", themeId))
+        when(diaryThemePersistencePort.existsByUserUuidAndNameExcludingId(userUuid, "여행", id))
                 .thenReturn(false);
         when(diaryThemePersistencePort.save(any(DiaryTheme.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        DiaryTheme updated = themeService.updateTheme(userUuid, themeId, "여행");
+        DiaryTheme updated = themeService.updateTheme(userUuid, id, "여행");
 
         assertThat(updated.getName()).isEqualTo("여행");
     }
 
     @Test
     void updateTheme_notFound() {
-        Long themeId = 99L;
-        when(diaryThemePersistencePort.findByIdAndUserUuid(themeId, userUuid))
+        Long id = 99L;
+        when(diaryThemePersistencePort.findByIdAndUserUuid(id, userUuid))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> themeService.updateTheme(userUuid, themeId, "여행"))
+        assertThatThrownBy(() -> themeService.updateTheme(userUuid, id, "여행"))
                 .isInstanceOf(ThemeNotFoundException.class);
     }
 
     @Test
     void deleteTheme_lastRemaining_throws() {
-        Long themeId = 1L;
-        DiaryTheme existing = DiaryTheme.reconstitute(themeId, userUuid, "일상",
+        Long id = 1L;
+        DiaryTheme existing = DiaryTheme.reconstitute(id, UUID.randomUUID(), userUuid, "일상",
                 LocalDateTime.now(), LocalDateTime.now(), null);
-        when(diaryThemePersistencePort.findByIdAndUserUuid(themeId, userUuid))
+        when(diaryThemePersistencePort.findByIdAndUserUuid(id, userUuid))
                 .thenReturn(Optional.of(existing));
         when(diaryThemePersistencePort.countByUserUuid(userUuid)).thenReturn(1L);
 
-        assertThatThrownBy(() -> themeService.deleteTheme(userUuid, themeId))
+        assertThatThrownBy(() -> themeService.deleteTheme(userUuid, id))
                 .isInstanceOf(ThemeLastRemainingException.class);
 
-        verify(diaryThemePersistencePort, never()).softDeleteWithVideos(themeId);
+        verify(diaryThemePersistencePort, never()).softDelete(id);
+        verify(diaryVideoPersistencePort, never()).softDeleteAllByThemeId(id);
     }
 
     @Test
     void deleteTheme_success() {
-        Long themeId = 1L;
-        DiaryTheme existing = DiaryTheme.reconstitute(themeId, userUuid, "일상",
+        Long id = 1L;
+        DiaryTheme existing = DiaryTheme.reconstitute(id, UUID.randomUUID(), userUuid, "일상",
                 LocalDateTime.now(), LocalDateTime.now(), null);
-        when(diaryThemePersistencePort.findByIdAndUserUuid(themeId, userUuid))
+        when(diaryThemePersistencePort.findByIdAndUserUuid(id, userUuid))
                 .thenReturn(Optional.of(existing));
         when(diaryThemePersistencePort.countByUserUuid(userUuid)).thenReturn(2L);
 
-        themeService.deleteTheme(userUuid, themeId);
+        themeService.deleteTheme(userUuid, id);
 
-        verify(diaryThemePersistencePort).softDeleteWithVideos(themeId);
+        verify(diaryVideoPersistencePort).softDeleteAllByThemeId(id);
+        verify(diaryThemePersistencePort).softDelete(id);
     }
 
     @Test
     void deleteTheme_notFound() {
-        Long themeId = 99L;
-        when(diaryThemePersistencePort.findByIdAndUserUuid(themeId, userUuid))
+        Long id = 99L;
+        when(diaryThemePersistencePort.findByIdAndUserUuid(id, userUuid))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> themeService.deleteTheme(userUuid, themeId))
+        assertThatThrownBy(() -> themeService.deleteTheme(userUuid, id))
                 .isInstanceOf(ThemeNotFoundException.class);
 
-        verify(diaryThemePersistencePort, never()).softDeleteWithVideos(themeId);
+        verify(diaryThemePersistencePort, never()).softDelete(id);
+        verify(diaryVideoPersistencePort, never()).softDeleteAllByThemeId(id);
     }
 }

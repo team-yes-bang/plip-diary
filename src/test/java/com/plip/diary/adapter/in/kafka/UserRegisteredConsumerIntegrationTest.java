@@ -1,7 +1,7 @@
 package com.plip.diary.adapter.in.kafka;
 
 import com.plip.diary.adapter.in.kafka.dto.UserRegisteredEvent;
-import com.plip.diary.adapter.out.persistence.repository.DiaryThemeJpaRepository;
+import com.plip.diary.application.port.out.DiaryThemePersistencePort;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,6 @@ import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -35,7 +34,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 )
 @ActiveProfiles({"test", "kafka-test"})
 @Import(UserRegisteredConsumerIntegrationTest.KafkaTestProducerConfig.class)
-@Transactional
 class UserRegisteredConsumerIntegrationTest {
 
     private static final String TOPIC = "user.registered";
@@ -47,7 +45,7 @@ class UserRegisteredConsumerIntegrationTest {
     private KafkaTemplate<String, String> rawKafkaTemplate;
 
     @Autowired
-    private DiaryThemeJpaRepository diaryThemeJpaRepository;
+    private DiaryThemePersistencePort diaryThemePersistencePort;
 
     @Test
     void consumeUserRegisteredEvent_createsDefaultTheme() throws Exception {
@@ -55,9 +53,9 @@ class UserRegisteredConsumerIntegrationTest {
 
         kafkaTemplate.send(TOPIC, new UserRegisteredEvent(userUuid)).get(5, TimeUnit.SECONDS);
 
-        waitUntil(() -> diaryThemeJpaRepository.existsByUserUuidAndNameAndDeletedAtIsNull(userUuid, "일상"));
+        waitUntil(() -> diaryThemePersistencePort.existsByUserUuidAndName(userUuid, "일상"));
 
-        assertThat(diaryThemeJpaRepository.existsByUserUuidAndNameAndDeletedAtIsNull(userUuid, "일상")).isTrue();
+        assertThat(diaryThemePersistencePort.existsByUserUuidAndName(userUuid, "일상")).isTrue();
     }
 
     @Test
@@ -69,9 +67,9 @@ class UserRegisteredConsumerIntegrationTest {
 
         rawKafkaTemplate.send(TOPIC, userUuid.toString(), payload).get(5, TimeUnit.SECONDS);
 
-        waitUntil(() -> diaryThemeJpaRepository.existsByUserUuidAndNameAndDeletedAtIsNull(userUuid, "일상"));
+        waitUntil(() -> diaryThemePersistencePort.existsByUserUuidAndName(userUuid, "일상"));
 
-        assertThat(diaryThemeJpaRepository.existsByUserUuidAndNameAndDeletedAtIsNull(userUuid, "일상")).isTrue();
+        assertThat(diaryThemePersistencePort.existsByUserUuidAndName(userUuid, "일상")).isTrue();
     }
 
     @Test
@@ -81,12 +79,9 @@ class UserRegisteredConsumerIntegrationTest {
         kafkaTemplate.send(TOPIC, new UserRegisteredEvent(userUuid)).get(5, TimeUnit.SECONDS);
         kafkaTemplate.send(TOPIC, new UserRegisteredEvent(userUuid)).get(5, TimeUnit.SECONDS);
 
-        waitUntil(() -> diaryThemeJpaRepository.existsByUserUuidAndNameAndDeletedAtIsNull(userUuid, "일상"));
+        waitUntil(() -> diaryThemePersistencePort.existsByUserUuidAndName(userUuid, "일상"));
 
-        long activeThemeCount = diaryThemeJpaRepository.findAll().stream()
-                .filter(theme -> userUuid.equals(theme.getUserUuid()))
-                .filter(theme -> theme.getDeletedAt() == null)
-                .count();
+        long activeThemeCount = diaryThemePersistencePort.findAllByUserUuid(userUuid).size();
 
         assertThat(activeThemeCount).isEqualTo(1);
     }

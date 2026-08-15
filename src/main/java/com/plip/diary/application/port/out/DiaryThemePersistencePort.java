@@ -14,9 +14,11 @@ public interface DiaryThemePersistencePort {
 
     DiaryTheme save(DiaryTheme theme);
 
-    Optional<DiaryTheme> findById(Long themeId);
+    Optional<DiaryTheme> findById(Long id);
 
-    Optional<DiaryTheme> findByIdAndUserUuid(Long themeId, UUID userUuid);
+    Optional<DiaryTheme> findByIdAndUserUuid(Long id, UUID userUuid);
+
+    Optional<DiaryTheme> findByThemeUuid(UUID themeUuid);
 
     List<DiaryTheme> findAllByUserUuid(UUID userUuid);
 
@@ -24,7 +26,7 @@ public interface DiaryThemePersistencePort {
 
     boolean existsByUserUuidAndName(UUID userUuid, String name);
 
-    boolean existsByUserUuidAndNameExcludingThemeId(UUID userUuid, String name, Long themeId);
+    boolean existsByUserUuidAndNameExcludingId(UUID userUuid, String name, Long id);
 
-    void softDeleteWithVideos(Long themeId);
+    void softDelete(Long id);
 }

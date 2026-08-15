@@ -1,14 +1,12 @@
-package com.plip.diary.adapter.out.persistence.entity;
+package com.plip.diary.adapter.out.persistence.video;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -24,16 +22,14 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "diary_videos")
-public class DiaryVideoEntity {
+class DiaryVideoJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "diary_video_id")
-    private Long diaryVideoId;
+    private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "theme_id", nullable = false)
-    private DiaryThemeEntity theme;
+    @Column(name = "theme_id", nullable = false)
+    private Long themeId;
 
     @JdbcTypeCode(SqlTypes.BINARY)
     @Column(name = "video_uuid", nullable = false, length = 16)
@@ -42,30 +38,44 @@ public class DiaryVideoEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     @Builder
-    private DiaryVideoEntity(
-            Long diaryVideoId,
-            DiaryThemeEntity theme,
+    private DiaryVideoJpaEntity(
+            Long id,
+            Long themeId,
             UUID videoUuid,
             LocalDateTime createdAt,
+            LocalDateTime updatedAt,
             LocalDateTime deletedAt
     ) {
-        this.diaryVideoId = diaryVideoId;
-        this.theme = theme;
+        this.id = id;
+        this.themeId = themeId;
         this.videoUuid = videoUuid;
         this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
     }
 
     @PrePersist
     void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
     }
 
-    public void markDeleted() {
-        this.deletedAt = LocalDateTime.now();
+    @PreUpdate
+    void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    void markDeleted() {
+        LocalDateTime now = LocalDateTime.now();
+        this.deletedAt = now;
+        this.updatedAt = now;
     }
 }

@@ -12,5 +12,7 @@ public interface DiaryVideoPersistencePort {
 
     DiaryVideo save(DiaryVideo video);
 
-    Optional<DiaryVideo> findById(Long diaryVideoId);
+    Optional<DiaryVideo> findById(Long id);
+
+    void softDeleteAllByThemeId(Long themeId);
 }

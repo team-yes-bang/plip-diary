@@ -1,6 +1,6 @@
 package com.plip.diary.adapter.in.web.dto;
 
-import com.plip.diary.application.exception.ErrorCode;
+import com.plip.diary.global.exception.ErrorCode;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "API 오류 응답")

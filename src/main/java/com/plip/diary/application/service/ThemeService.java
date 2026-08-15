@@ -1,16 +1,18 @@
 package com.plip.diary.application.service;
 
-import com.plip.diary.application.exception.ErrorCode;
-import com.plip.diary.application.exception.ThemeLastRemainingException;
-import com.plip.diary.application.exception.ThemeLimitExceededException;
-import com.plip.diary.application.exception.ThemeNameDuplicateException;
-import com.plip.diary.application.exception.ThemeNotFoundException;
+import com.plip.diary.global.exception.ErrorCode;
+import com.plip.diary.global.exception.ThemeLastRemainingException;
+import com.plip.diary.global.exception.ThemeLimitExceededException;
+import com.plip.diary.global.exception.ThemeNameDuplicateException;
+import com.plip.diary.global.exception.ThemeNotFoundException;
 import com.plip.diary.application.port.in.CreateThemeUseCase;
 import com.plip.diary.application.port.in.DeleteThemeUseCase;
 import com.plip.diary.application.port.in.GetThemeUseCase;
 import com.plip.diary.application.port.in.ListThemesUseCase;
 import com.plip.diary.application.port.in.UpdateThemeUseCase;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
+import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
+import com.plip.diary.application.port.out.UuidGeneratorPort;
 import com.plip.diary.domain.model.DiaryTheme;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,8 @@ public class ThemeService implements CreateThemeUseCase, ListThemesUseCase, GetT
         UpdateThemeUseCase, DeleteThemeUseCase {
 
     private final DiaryThemePersistencePort diaryThemePersistencePort;
+    private final DiaryVideoPersistencePort diaryVideoPersistencePort;
+    private final UuidGeneratorPort uuidGeneratorPort;
 
     @Override
     @Transactional(readOnly = true)
@@ -34,8 +38,8 @@ public class ThemeService implements CreateThemeUseCase, ListThemesUseCase, GetT
 
     @Override
     @Transactional(readOnly = true)
-    public DiaryTheme getTheme(UUID userUuid, Long themeId) {
-        return diaryThemePersistencePort.findByIdAndUserUuid(themeId, userUuid)
+    public DiaryTheme getTheme(UUID userUuid, Long id) {
+        return diaryThemePersistencePort.findByIdAndUserUuid(id, userUuid)
                 .orElseThrow(ThemeNotFoundException::new);
     }
 
@@ -48,15 +52,15 @@ public class ThemeService implements CreateThemeUseCase, ListThemesUseCase, GetT
         if (diaryThemePersistencePort.existsByUserUuidAndName(userUuid, name)) {
             throw new ThemeNameDuplicateException();
         }
-        return diaryThemePersistencePort.save(DiaryTheme.create(userUuid, name));
+        return diaryThemePersistencePort.save(DiaryTheme.create(userUuid, name, uuidGeneratorPort.generate()));
     }
 
     @Override
     @Transactional
-    public DiaryTheme updateTheme(UUID userUuid, Long themeId, String name) {
-        DiaryTheme theme = diaryThemePersistencePort.findByIdAndUserUuid(themeId, userUuid)
+    public DiaryTheme updateTheme(UUID userUuid, Long id, String name) {
+        DiaryTheme theme = diaryThemePersistencePort.findByIdAndUserUuid(id, userUuid)
                 .orElseThrow(ThemeNotFoundException::new);
-        if (diaryThemePersistencePort.existsByUserUuidAndNameExcludingThemeId(userUuid, name, themeId)) {
+        if (diaryThemePersistencePort.existsByUserUuidAndNameExcludingId(userUuid, name, id)) {
             throw new ThemeNameDuplicateException();
         }
         return diaryThemePersistencePort.save(theme.rename(name));
@@ -64,12 +68,13 @@ public class ThemeService implements CreateThemeUseCase, ListThemesUseCase, GetT
 
     @Override
     @Transactional
-    public void deleteTheme(UUID userUuid, Long themeId) {
-        diaryThemePersistencePort.findByIdAndUserUuid(themeId, userUuid)
+    public void deleteTheme(UUID userUuid, Long id) {
+        diaryThemePersistencePort.findByIdAndUserUuid(id, userUuid)
                 .orElseThrow(ThemeNotFoundException::new);
         if (diaryThemePersistencePort.countByUserUuid(userUuid) <= 1) {
             throw new ThemeLastRemainingException();
         }
-        diaryThemePersistencePort.softDeleteWithVideos(themeId);
+        diaryVideoPersistencePort.softDeleteAllByThemeId(id);
+        diaryThemePersistencePort.softDelete(id);
     }
 }

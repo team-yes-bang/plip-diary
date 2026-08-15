@@ -1,4 +1,4 @@
-package com.plip.diary.adapter.out.persistence.entity;
+package com.plip.diary.adapter.out.persistence.theme;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,12 +22,15 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "diary_themes")
-public class DiaryThemeEntity {
+class DiaryThemeJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "theme_id")
-    private Long themeId;
+    private Long id;
+
+    @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(name = "theme_uuid", nullable = false, length = 16, unique = true)
+    private UUID themeUuid;
 
     @JdbcTypeCode(SqlTypes.BINARY)
     @Column(name = "user_uuid", nullable = false, length = 16)
@@ -46,15 +49,17 @@ public class DiaryThemeEntity {
     private LocalDateTime deletedAt;
 
     @Builder
-    private DiaryThemeEntity(
-            Long themeId,
+    private DiaryThemeJpaEntity(
+            Long id,
+            UUID themeUuid,
             UUID userUuid,
             String name,
             LocalDateTime createdAt,
             LocalDateTime updatedAt,
             LocalDateTime deletedAt
     ) {
-        this.themeId = themeId;
+        this.id = id;
+        this.themeUuid = themeUuid;
         this.userUuid = userUuid;
         this.name = name;
         this.createdAt = createdAt;
@@ -74,11 +79,7 @@ public class DiaryThemeEntity {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void rename(String name) {
-        this.name = name;
-    }
-
-    public void markDeleted() {
+    void markDeleted() {
         LocalDateTime now = LocalDateTime.now();
         this.deletedAt = now;
         this.updatedAt = now;
