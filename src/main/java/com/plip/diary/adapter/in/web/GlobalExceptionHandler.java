@@ -1,8 +1,8 @@
 package com.plip.diary.adapter.in.web;
 
 import com.plip.diary.adapter.in.web.dto.ErrorResponse;
-import com.plip.diary.application.exception.BusinessException;
-import com.plip.diary.application.exception.ErrorCode;
+import com.plip.diary.global.exception.BusinessException;
+import com.plip.diary.global.exception.ErrorCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;

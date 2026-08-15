@@ -50,14 +50,14 @@ public class ThemeController {
     @Operation(
             summary = "테마 메타 단건 조회",
             description = "테마 이름·생성일 등 **메타 정보만** 반환. "
-                    + "테마에 포함된 영상 목록은 `GET /api/diaries/themes/{themeId}/timeline` (Phase 4-3) 사용."
+                    + "테마에 포함된 영상 목록은 `GET /api/diaries/themes/{id}/timeline` (Phase 4-3) 사용."
     )
-    @GetMapping("/{themeId}")
+    @GetMapping("/{id}")
     public ThemeResponse getTheme(
             @RequestHeader(USER_UUID_HEADER) UUID userUuid,
-            @PathVariable Long themeId
+            @PathVariable Long id
     ) {
-        return ThemeResponse.from(getThemeUseCase.getTheme(userUuid, themeId));
+        return ThemeResponse.from(getThemeUseCase.getTheme(userUuid, id));
     }
 
     @Operation(summary = "테마 생성", description = "활성 테마는 사용자당 최대 5개까지 생성 가능")
@@ -71,23 +71,23 @@ public class ThemeController {
     }
 
     @Operation(summary = "테마 이름 수정")
-    @PatchMapping("/{themeId}")
+    @PatchMapping("/{id}")
     public ThemeResponse updateTheme(
             @RequestHeader(USER_UUID_HEADER) UUID userUuid,
-            @PathVariable Long themeId,
+            @PathVariable Long id,
             @Valid @RequestBody UpdateThemeRequest request
     ) {
-        var theme = updateThemeUseCase.updateTheme(userUuid, themeId, request.name());
+        var theme = updateThemeUseCase.updateTheme(userUuid, id, request.name());
         return ThemeResponse.from(theme);
     }
 
     @Operation(summary = "테마 삭제", description = "테마와 연관 영상을 Soft Delete 처리")
-    @DeleteMapping("/{themeId}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTheme(
             @RequestHeader(USER_UUID_HEADER) UUID userUuid,
-            @PathVariable Long themeId
+            @PathVariable Long id
     ) {
-        deleteThemeUseCase.deleteTheme(userUuid, themeId);
+        deleteThemeUseCase.deleteTheme(userUuid, id);
         return ResponseEntity.noContent().build();
     }
 }

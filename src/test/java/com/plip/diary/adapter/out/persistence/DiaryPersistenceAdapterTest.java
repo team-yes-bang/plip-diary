@@ -1,5 +1,7 @@
 package com.plip.diary.adapter.out.persistence;
 
+import com.plip.diary.adapter.out.persistence.theme.DiaryThemePersistenceAdapter;
+import com.plip.diary.adapter.out.persistence.video.DiaryVideoPersistenceAdapter;
 import com.plip.diary.domain.model.DiaryTheme;
 import com.plip.diary.domain.model.DiaryVideo;
 import org.junit.jupiter.api.Test;
@@ -26,49 +28,51 @@ class DiaryPersistenceAdapterTest {
     @Test
     void saveAndFindTheme() {
         UUID userUuid = UUID.randomUUID();
-        DiaryTheme theme = DiaryTheme.create(userUuid, "일상");
+        DiaryTheme theme = DiaryTheme.create(userUuid, "일상", UUID.randomUUID());
 
         DiaryTheme saved = diaryThemePersistenceAdapter.save(theme);
 
-        assertThat(saved.getThemeId()).isNotNull();
+        assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getThemeUuid()).isNotNull();
         assertThat(saved.getUserUuid()).isEqualTo(userUuid);
         assertThat(saved.getName()).isEqualTo("일상");
         assertThat(saved.isActive()).isTrue();
         assertThat(saved.getCreatedAt()).isNotNull();
         assertThat(saved.getUpdatedAt()).isNotNull();
 
-        DiaryTheme found = diaryThemePersistenceAdapter.findById(saved.getThemeId()).orElseThrow();
-        assertThat(found.getThemeId()).isEqualTo(saved.getThemeId());
+        DiaryTheme found = diaryThemePersistenceAdapter.findById(saved.getId()).orElseThrow();
+        assertThat(found.getId()).isEqualTo(saved.getId());
         assertThat(found.getUserUuid()).isEqualTo(userUuid);
     }
 
     @Test
     void findById_excludesSoftDeleted() {
         UUID userUuid = UUID.randomUUID();
-        DiaryTheme saved = diaryThemePersistenceAdapter.save(DiaryTheme.create(userUuid, "일상"));
-        diaryThemePersistenceAdapter.softDeleteWithVideos(saved.getThemeId());
+        DiaryTheme saved = diaryThemePersistenceAdapter.save(DiaryTheme.create(userUuid, "일상", UUID.randomUUID()));
+        diaryThemePersistenceAdapter.softDelete(saved.getId());
 
-        assertThat(diaryThemePersistenceAdapter.findById(saved.getThemeId())).isEmpty();
+        assertThat(diaryThemePersistenceAdapter.findById(saved.getId())).isEmpty();
     }
 
     @Test
     void saveAndFindVideo() {
         DiaryTheme theme = diaryThemePersistenceAdapter.save(
-                DiaryTheme.create(UUID.randomUUID(), "일상")
+                DiaryTheme.create(UUID.randomUUID(), "일상", UUID.randomUUID())
         );
         UUID videoUuid = UUID.randomUUID();
-        DiaryVideo video = DiaryVideo.create(theme.getThemeId(), videoUuid);
+        DiaryVideo video = DiaryVideo.create(theme.getId(), videoUuid);
 
         DiaryVideo saved = diaryVideoPersistenceAdapter.save(video);
 
-        assertThat(saved.getDiaryVideoId()).isNotNull();
-        assertThat(saved.getThemeId()).isEqualTo(theme.getThemeId());
+        assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getThemeId()).isEqualTo(theme.getId());
         assertThat(saved.getVideoUuid()).isEqualTo(videoUuid);
         assertThat(saved.isActive()).isTrue();
         assertThat(saved.getCreatedAt()).isNotNull();
+        assertThat(saved.getUpdatedAt()).isNotNull();
 
-        DiaryVideo found = diaryVideoPersistenceAdapter.findById(saved.getDiaryVideoId()).orElseThrow();
-        assertThat(found.getDiaryVideoId()).isEqualTo(saved.getDiaryVideoId());
+        DiaryVideo found = diaryVideoPersistenceAdapter.findById(saved.getId()).orElseThrow();
+        assertThat(found.getId()).isEqualTo(saved.getId());
         assertThat(found.getVideoUuid()).isEqualTo(videoUuid);
     }
 }

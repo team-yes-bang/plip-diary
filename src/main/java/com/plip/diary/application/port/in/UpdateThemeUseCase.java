@@ -6,5 +6,5 @@ import java.util.UUID;
 
 public interface UpdateThemeUseCase {
 
-    DiaryTheme updateTheme(UUID userUuid, Long themeId, String name);
+    DiaryTheme updateTheme(UUID userUuid, Long id, String name);
 }

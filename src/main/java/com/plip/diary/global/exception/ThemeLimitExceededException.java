@@ -1,4 +1,4 @@
-package com.plip.diary.application.exception;
+package com.plip.diary.global.exception;
 
 public class ThemeLimitExceededException extends BusinessException {
 
