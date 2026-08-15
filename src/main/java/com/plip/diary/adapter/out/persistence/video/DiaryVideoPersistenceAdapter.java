@@ -7,17 +7,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import com.plip.diary.global.time.KstDateTimes;
+
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
-
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final DiaryVideoSpringDataRepository diaryVideoSpringDataRepository;
     private final DiaryThemePersistencePort diaryThemePersistencePort;
@@ -45,9 +43,8 @@ public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
 
     @Override
     public long countTodayByUserUuid(UUID userUuid) {
-        LocalDate todayKst = LocalDate.now(KST);
-        LocalDateTime start = todayKst.atStartOfDay(KST).toLocalDateTime();
-        LocalDateTime end = todayKst.plusDays(1).atStartOfDay(KST).toLocalDateTime();
+        LocalDateTime start = KstDateTimes.startOfTodayKstAsUtcLocalDateTime();
+        LocalDateTime end = KstDateTimes.startOfTomorrowKstAsUtcLocalDateTime();
         return diaryVideoSpringDataRepository.countTodayByUserUuid(userUuid, start, end);
     }
 
