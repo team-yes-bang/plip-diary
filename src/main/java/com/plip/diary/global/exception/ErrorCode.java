@@ -14,6 +14,9 @@ public enum ErrorCode {
     THEME_LAST_REMAINING(HttpStatus.CONFLICT, "THEME_003", "마지막 남은 테마는 삭제할 수 없습니다."),
     THEME_NAME_DUPLICATE(HttpStatus.CONFLICT, "THEME_004", "이미 사용 중인 테마 이름입니다."),
 
+    // Diary Video
+    DIARY_VIDEO_NOT_FOUND(HttpStatus.NOT_FOUND, "VIDEO_001", "다이어리 영상을 찾을 수 없습니다."),
+
     // Common (user-service COMMON_* 정합)
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "COMMON_001", "입력값이 올바르지 않습니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_002", "서버 내부 오류가 발생했습니다.");

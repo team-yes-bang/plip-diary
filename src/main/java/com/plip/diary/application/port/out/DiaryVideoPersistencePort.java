@@ -15,9 +15,13 @@ public interface DiaryVideoPersistencePort {
 
     Optional<DiaryVideo> findById(Long id);
 
+    Optional<DiaryVideo> findByIdAndUserUuid(Long id, UUID userUuid);
+
     boolean existsByThemeIdAndVideoUuid(Long themeId, UUID videoUuid);
 
     long countTodayByUserUuid(UUID userUuid);
 
     void softDeleteAllByThemeId(Long themeId);
+
+    void softDelete(Long id);
 }

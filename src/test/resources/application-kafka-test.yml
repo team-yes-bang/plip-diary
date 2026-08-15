@@ -11,3 +11,4 @@ app:
     topics:
       user-registered: user.registered
       video-uploaded: video.uploaded
+      video-deleted: diary.video.deleted
