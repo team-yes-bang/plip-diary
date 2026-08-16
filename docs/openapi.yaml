@@ -13,6 +13,8 @@ tags:
   description: 캘린더 API
 - name: Diary Video
   description: 다이어리 영상 API
+- name: Date Timeline
+  description: 날짜별 다이어리 타임라인 API
 paths:
   /api/diaries/themes:
     get:
@@ -142,6 +144,34 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ThemeResponse"
+  /api/diaries/dates/{date}:
+    get:
+      tags:
+      - Date Timeline
+      summary: 날짜별 다이어리 조회
+      description: 특정일(KST) 영상을 테마별 섹션으로 반환. `diary_videos` + video-service 썸네일·캡션
+        enrichment. 테마 전체 목록은 `GET /api/diaries/themes` 별도 호출.
+      operationId: getDateTimeline
+      parameters:
+      - name: X-User-Uuid
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: date
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/DateTimelineResponse"
   /api/diaries/calendar:
     get:
       tags:
@@ -260,6 +290,62 @@ components:
           description: 활성 테마 목록
           items:
             $ref: "#/components/schemas/ThemeResponse"
+    DateTimelineResponse:
+      type: object
+      description: 날짜별 다이어리 타임라인 응답
+      properties:
+        date:
+          type: string
+          format: date
+          description: "조회 날짜 (KST, ISO-8601 date)"
+          example: 2026-08-01
+        sections:
+          type: array
+          description: 테마별 영상 섹션 (해당 날짜에 영상이 있는 테마만)
+          items:
+            $ref: "#/components/schemas/DateTimelineSectionResponse"
+    DateTimelineSectionResponse:
+      type: object
+      description: 날짜별 타임라인 테마 섹션
+      properties:
+        themeId:
+          type: integer
+          format: int64
+          description: 테마 ID
+          example: 1
+        themeName:
+          type: string
+          description: 테마 이름
+          example: 일상
+        videos:
+          type: array
+          description: 해당 테마·날짜의 영상 목록
+          items:
+            $ref: "#/components/schemas/DateTimelineVideoResponse"
+    DateTimelineVideoResponse:
+      type: object
+      description: 날짜별 타임라인 영상 항목
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 다이어리 영상 ID
+          example: 10
+        videoUuid:
+          type: string
+          format: uuid
+          description: 영상 UUID (video-service 참조)
+          example: 01912345-6789-7abc-def0-123456789abd
+        caption:
+          type: string
+          description: 캡션 (video-service enrichment)
+        thumbnailUrl:
+          type: string
+          description: 썸네일 URL (video-service enrichment)
+        createdAt:
+          type: string
+          format: date-time
+          description: 바인딩 시각
     CalendarResponse:
       type: object
       description: 월별 캘린더 인디케이터 응답

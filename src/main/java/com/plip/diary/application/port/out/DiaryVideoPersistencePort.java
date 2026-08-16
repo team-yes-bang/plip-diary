@@ -3,6 +3,7 @@ package com.plip.diary.application.port.out;
 import com.plip.diary.domain.model.DiaryVideo;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,4 +29,6 @@ public interface DiaryVideoPersistencePort {
     void softDelete(Long id);
 
     List<LocalDate> findDistinctWrittenDatesInMonth(UUID userUuid, int year, int month);
+
+    List<DiaryVideo> findByUserUuidAndCreatedAtRange(UUID userUuid, LocalDateTime start, LocalDateTime end);
 }

@@ -81,4 +81,16 @@ public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
                 .sorted()
                 .toList();
     }
+
+    @Override
+    public List<DiaryVideo> findByUserUuidAndCreatedAtRange(
+            UUID userUuid,
+            LocalDateTime start,
+            LocalDateTime end
+    ) {
+        return diaryVideoSpringDataRepository.findByUserUuidAndCreatedAtRange(userUuid, start, end)
+                .stream()
+                .map(diaryVideoMapper::toDomain)
+                .toList();
+    }
 }
