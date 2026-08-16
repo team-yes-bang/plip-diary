@@ -77,10 +77,10 @@ class ThemeTimelineControllerTest {
                 DiaryVideo.create(theme.getId(), aug2VideoUuid)
         );
 
-        LocalDateTime aug1KstUtc = KstDateTimes.startOfDayKstAsUtcLocalDateTime(
+        LocalDateTime aug1KstUtc = KstDateTimes.startOfDay(
                 java.time.LocalDate.of(2026, 8, 1)
         ).plusHours(10);
-        LocalDateTime aug2KstUtc = KstDateTimes.startOfDayKstAsUtcLocalDateTime(
+        LocalDateTime aug2KstUtc = KstDateTimes.startOfDay(
                 java.time.LocalDate.of(2026, 8, 2)
         ).plusHours(9);
         updateCreatedAt(aug1Video.getId(), aug1KstUtc);
@@ -122,7 +122,7 @@ class ThemeTimelineControllerTest {
 
         updateCreatedAt(
                 active.getId(),
-                KstDateTimes.startOfDayKstAsUtcLocalDateTime(java.time.LocalDate.of(2026, 8, 1)).plusHours(1)
+                KstDateTimes.startOfDay(java.time.LocalDate.of(2026, 8, 1)).plusHours(1)
         );
 
         when(videoServicePort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());

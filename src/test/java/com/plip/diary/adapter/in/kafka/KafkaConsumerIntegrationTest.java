@@ -6,6 +6,7 @@ import com.plip.diary.application.port.out.DiaryThemePersistencePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.domain.model.DiaryTheme;
 import com.plip.diary.domain.model.DiaryVideo;
+import com.plip.diary.global.time.KstDateTimes;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
@@ -60,6 +62,9 @@ class KafkaConsumerIntegrationTest {
 
     @Autowired
     private DiaryVideoPersistencePort diaryVideoPersistencePort;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Test
     void consumeUserRegisteredEvent_createsDefaultTheme() throws Exception {
@@ -155,6 +160,8 @@ class KafkaConsumerIntegrationTest {
 
         waitUntil(() -> diaryVideoPersistencePort.existsByThemeIdAndVideoUuid(theme.getId(), videoUuid));
 
+        seedTodayCreatedAt(theme.getId());
+
         long todayCount = diaryVideoPersistencePort.countTodayByUserUuid(userUuid);
         assertThat(todayCount).isEqualTo(1);
     }
@@ -168,6 +175,7 @@ class KafkaConsumerIntegrationTest {
         for (int i = 0; i < 20; i++) {
             diaryVideoPersistencePort.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
         }
+        seedTodayCreatedAt(theme.getId());
 
         UUID overflowVideoUuid = UUID.randomUUID();
         videoUploadedKafkaTemplate.send(
@@ -192,6 +200,14 @@ class KafkaConsumerIntegrationTest {
             Thread.sleep(200);
         }
         assertThat(condition.getAsBoolean()).isTrue();
+    }
+
+    private void seedTodayCreatedAt(Long themeId) {
+        jdbcTemplate.update(
+                "UPDATE diary_videos SET created_at = ? WHERE theme_id = ?",
+                KstDateTimes.startOfToday().plusHours(1),
+                themeId
+        );
     }
 
     @TestConfiguration

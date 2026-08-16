@@ -75,7 +75,7 @@ class DateTimelineControllerTest {
                 DiaryVideo.create(travel.getId(), travelVideoUuid)
         );
 
-        LocalDateTime aug1KstUtc = KstDateTimes.startOfDayKstAsUtcLocalDateTime(
+        LocalDateTime aug1KstUtc = KstDateTimes.startOfDay(
                 java.time.LocalDate.of(2026, 8, 1)
         ).plusHours(10);
         updateCreatedAt(dailyVideo.getId(), aug1KstUtc);
@@ -118,7 +118,7 @@ class DateTimelineControllerTest {
         );
         diaryVideoPersistenceAdapter.softDelete(deleted.getId());
 
-        LocalDateTime aug1KstUtc = KstDateTimes.startOfDayKstAsUtcLocalDateTime(
+        LocalDateTime aug1KstUtc = KstDateTimes.startOfDay(
                 java.time.LocalDate.of(2026, 8, 1)
         ).plusHours(5);
         updateCreatedAt(active.getId(), aug1KstUtc);
@@ -148,7 +148,7 @@ class DateTimelineControllerTest {
         DiaryVideo video = diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
         updateCreatedAt(
                 video.getId(),
-                KstDateTimes.startOfDayKstAsUtcLocalDateTime(java.time.LocalDate.of(2026, 8, 1)).plusHours(1)
+                KstDateTimes.startOfDay(java.time.LocalDate.of(2026, 8, 1)).plusHours(1)
         );
 
         UUID otherUser = UUID.randomUUID();

@@ -56,10 +56,10 @@ class CalendarControllerTest {
         DiaryVideo first = diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
         DiaryVideo second = diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
 
-        LocalDateTime aug1KstMidnightUtc = KstDateTimes.startOfMonthKstAsUtcLocalDateTime(2026, 8);
-        LocalDateTime aug15KstUtc = aug1KstMidnightUtc.plusDays(14).plusHours(12);
-        updateCreatedAt(first.getId(), aug1KstMidnightUtc.plusHours(1));
-        updateCreatedAt(second.getId(), aug15KstUtc);
+        LocalDateTime aug1Kst = KstDateTimes.startOfMonth(2026, 8);
+        LocalDateTime aug15Kst = aug1Kst.plusDays(14).plusHours(12);
+        updateCreatedAt(first.getId(), aug1Kst.plusHours(1));
+        updateCreatedAt(second.getId(), aug15Kst);
 
         mockMvc.perform(get("/api/diaries/calendar")
                         .header(CalendarController.USER_UUID_HEADER, userUuid)
@@ -92,8 +92,8 @@ class CalendarControllerTest {
         );
         diaryVideoPersistenceAdapter.softDelete(deleted.getId());
 
-        LocalDateTime aug1KstUtc = KstDateTimes.startOfMonthKstAsUtcLocalDateTime(2026, 8).plusHours(2);
-        updateCreatedAt(active.getId(), aug1KstUtc);
+        LocalDateTime aug1Kst = KstDateTimes.startOfMonth(2026, 8).plusHours(2);
+        updateCreatedAt(active.getId(), aug1Kst);
 
         mockMvc.perform(get("/api/diaries/calendar")
                         .header(CalendarController.USER_UUID_HEADER, userUuid)
@@ -130,7 +130,7 @@ class CalendarControllerTest {
                 DiaryTheme.create(userUuid, "일상", UUID.randomUUID())
         );
         DiaryVideo video = diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
-        updateCreatedAt(video.getId(), KstDateTimes.startOfMonthKstAsUtcLocalDateTime(2026, 8).plusHours(3));
+        updateCreatedAt(video.getId(), KstDateTimes.startOfMonth(2026, 8).plusHours(3));
 
         UUID otherUser = UUID.randomUUID();
         mockMvc.perform(get("/api/diaries/calendar")

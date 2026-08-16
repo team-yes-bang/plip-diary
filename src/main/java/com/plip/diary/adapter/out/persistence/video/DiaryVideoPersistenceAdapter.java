@@ -51,8 +51,8 @@ public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
 
     @Override
     public long countTodayByUserUuid(UUID userUuid) {
-        LocalDateTime start = KstDateTimes.startOfTodayKstAsUtcLocalDateTime();
-        LocalDateTime end = KstDateTimes.startOfTomorrowKstAsUtcLocalDateTime();
+        LocalDateTime start = KstDateTimes.startOfToday();
+        LocalDateTime end = KstDateTimes.startOfTomorrow();
         return diaryVideoSpringDataRepository.countTodayByUserUuid(userUuid, start, end);
     }
 
@@ -72,11 +72,11 @@ public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
 
     @Override
     public List<LocalDate> findDistinctWrittenDatesInMonth(UUID userUuid, int year, int month) {
-        LocalDateTime start = KstDateTimes.startOfMonthKstAsUtcLocalDateTime(year, month);
-        LocalDateTime end = KstDateTimes.startOfNextMonthKstAsUtcLocalDateTime(year, month);
+        LocalDateTime start = KstDateTimes.startOfMonth(year, month);
+        LocalDateTime end = KstDateTimes.startOfNextMonth(year, month);
         return diaryVideoSpringDataRepository.findCreatedAtInMonthByUserUuid(userUuid, start, end)
                 .stream()
-                .map(KstDateTimes::toKstLocalDate)
+                .map(KstDateTimes::toLocalDate)
                 .distinct()
                 .sorted()
                 .toList();

@@ -45,7 +45,7 @@ public class ThemeTimelineService implements GetThemeTimelineUseCase {
         Map<UUID, VideoMetadata> metadataByVideoUuid = videoServicePort.fetchVideoMetadata(userUuid, videoUuids);
 
         Map<LocalDate, List<DiaryVideo>> videosByDate = videos.stream()
-                .collect(Collectors.groupingBy(video -> KstDateTimes.toKstLocalDate(video.getCreatedAt())));
+                .collect(Collectors.groupingBy(video -> KstDateTimes.toLocalDate(video.getCreatedAt())));
 
         List<ThemeTimelineSection> sections = videosByDate.entrySet().stream()
                 .sorted(Map.Entry.<LocalDate, List<DiaryVideo>>comparingByKey().reversed())
