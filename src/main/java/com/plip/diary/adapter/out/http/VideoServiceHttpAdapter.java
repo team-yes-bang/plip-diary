@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 /**
  * Phase 4-2 interim — 조회 시 video-service HTTP batch 호출로 enrichment.
- * <p>5천만 사용자 규모 최종 조회 경로는 Phase 6-1 Read Model(CQRS) 전환. 본 Adapter는 그때 교체·fallback 용.</p>
+ * <p>5천만 사용자 규모 최종 조회 경로는 Phase 5-3 Read Model(CQRS) 전환. 본 Adapter는 그때 교체·fallback 용.</p>
  */
 @Slf4j
 @Component

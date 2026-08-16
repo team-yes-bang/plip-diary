@@ -12,6 +12,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
+      mongo:
+        condition: service_healthy
 
   mysql:
     image: mysql:8.4
@@ -77,6 +79,25 @@ services:
     networks:
       - plip-net
 
+  mongo:
+    image: mongo:7
+    container_name: plip-diary-mongo
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-plip_diary_read}
+    volumes:
+      - plip_diary_mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - plip-net
+
   kafka-ui:
     image: kafbat/kafka-ui:latest
     container_name: plip-diary-kafka-ui
@@ -95,6 +116,7 @@ services:
 
 volumes:
   plip_diary_mysql_data:
+  plip_diary_mongo_data:
 
 networks:
   plip-net:
