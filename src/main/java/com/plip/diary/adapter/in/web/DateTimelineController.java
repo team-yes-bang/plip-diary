@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.UUID;
 
-@Tag(name = TimelineWeb.SWAGGER_TAG, description = TimelineWeb.SWAGGER_TAG_DESCRIPTION)
+@Tag(name = "Timeline", description = "다이어리 타임라인 API")
 @RestController
 @RequiredArgsConstructor
 public class DateTimelineController {

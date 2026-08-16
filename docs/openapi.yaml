@@ -9,6 +9,8 @@ servers:
 tags:
 - name: Theme
   description: 다이어리 테마 API
+- name: Home
+  description: 홈 피드 API
 - name: Calendar
   description: 캘린더 API
 - name: Diary Video
@@ -172,6 +174,29 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ThemeTimelineResponse"
+  /api/diaries/home:
+    get:
+      tags:
+      - Home
+      summary: 홈 피드 조회
+      description: "KST 오늘(0건이어도 포함) + 영상이 있는 최신 2일, 일자별 최대 4건. `diary_videos` + video-service\
+        \ 썸네일·캡션 enrichment. 테마 전체 목록은 `GET /api/diaries/themes` 별도 호출. 특정일 전체는 `GET\
+        \ /api/diaries/dates/{date}`."
+      operationId: getHomeFeed
+      parameters:
+      - name: X-User-Uuid
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/HomeFeedResponse"
   /api/diaries/dates/{date}:
     get:
       tags:
@@ -350,6 +375,62 @@ components:
           format: int64
           description: 다이어리 영상 ID
           example: 10
+        videoUuid:
+          type: string
+          format: uuid
+          description: 영상 UUID (video-service 참조)
+          example: 01912345-6789-7abc-def0-123456789abd
+        caption:
+          type: string
+          description: 캡션 (video-service enrichment)
+        thumbnailUrl:
+          type: string
+          description: 썸네일 URL (video-service enrichment)
+        createdAt:
+          type: string
+          format: date-time
+          description: 바인딩 시각
+    HomeFeedResponse:
+      type: object
+      description: 홈 피드 응답
+      properties:
+        sections:
+          type: array
+          description: "날짜별 영상 섹션 (오늘 KST 필수 포함, 최대 3일, 최신 날짜 우선)"
+          items:
+            $ref: "#/components/schemas/HomeFeedSectionResponse"
+    HomeFeedSectionResponse:
+      type: object
+      description: 홈 피드 날짜 섹션
+      properties:
+        date:
+          type: string
+          format: date
+          description: "작성일 (KST, ISO-8601 date)"
+          example: 2026-08-15
+        videos:
+          type: array
+          description: "해당 날짜의 영상 목록 (최대 4건, 최신순)"
+          items:
+            $ref: "#/components/schemas/HomeFeedVideoResponse"
+    HomeFeedVideoResponse:
+      type: object
+      description: 홈 피드 영상 항목
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: 다이어리 영상 ID
+          example: 10
+        themeId:
+          type: integer
+          format: int64
+          description: 테마 ID
+          example: 1
+        themeName:
+          type: string
+          description: 테마 이름
+          example: 일상
         videoUuid:
           type: string
           format: uuid
