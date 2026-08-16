@@ -31,8 +31,8 @@ public class DateTimelineService implements GetDateTimelineUseCase {
 
     @Override
     public DateTimeline getDateTimeline(UUID userUuid, LocalDate date) {
-        LocalDateTime start = KstDateTimes.startOfDayKstAsUtcLocalDateTime(date);
-        LocalDateTime end = KstDateTimes.startOfNextDayKstAsUtcLocalDateTime(date);
+        LocalDateTime start = KstDateTimes.startOfDay(date);
+        LocalDateTime end = KstDateTimes.startOfNextDay(date);
 
         List<DiaryVideo> videos = diaryVideoPersistencePort.findByUserUuidAndCreatedAtRange(userUuid, start, end);
         if (videos.isEmpty()) {

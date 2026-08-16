@@ -18,6 +18,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -33,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-class DateTimelineControllerTest {
+class ThemeTimelineControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -47,6 +49,9 @@ class DateTimelineControllerTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private EntityManager entityManager;
+
     @MockitoBean
     private VideoServicePort videoServicePort;
 
@@ -58,74 +63,71 @@ class DateTimelineControllerTest {
     }
 
     @Test
-    void getDateTimeline_returnsThemeSectionsWithEnrichment() throws Exception {
-        DiaryTheme daily = diaryThemePersistenceAdapter.save(
+    void getThemeTimeline_returnsDateSectionsWithEnrichment() throws Exception {
+        DiaryTheme theme = diaryThemePersistenceAdapter.save(
                 DiaryTheme.create(userUuid, "일상", UUID.randomUUID())
         );
-        DiaryTheme travel = diaryThemePersistenceAdapter.save(
-                DiaryTheme.create(userUuid, "여행", UUID.randomUUID())
-        );
 
-        UUID dailyVideoUuid = UUID.randomUUID();
-        UUID travelVideoUuid = UUID.randomUUID();
-        DiaryVideo dailyVideo = diaryVideoPersistenceAdapter.save(
-                DiaryVideo.create(daily.getId(), dailyVideoUuid)
+        UUID aug1VideoUuid = UUID.randomUUID();
+        UUID aug2VideoUuid = UUID.randomUUID();
+        DiaryVideo aug1Video = diaryVideoPersistenceAdapter.save(
+                DiaryVideo.create(theme.getId(), aug1VideoUuid)
         );
-        DiaryVideo travelVideo = diaryVideoPersistenceAdapter.save(
-                DiaryVideo.create(travel.getId(), travelVideoUuid)
+        DiaryVideo aug2Video = diaryVideoPersistenceAdapter.save(
+                DiaryVideo.create(theme.getId(), aug2VideoUuid)
         );
 
         LocalDateTime aug1KstUtc = KstDateTimes.startOfDay(
                 java.time.LocalDate.of(2026, 8, 1)
         ).plusHours(10);
-        updateCreatedAt(dailyVideo.getId(), aug1KstUtc);
-        updateCreatedAt(travelVideo.getId(), aug1KstUtc.plusHours(2));
+        LocalDateTime aug2KstUtc = KstDateTimes.startOfDay(
+                java.time.LocalDate.of(2026, 8, 2)
+        ).plusHours(9);
+        updateCreatedAt(aug1Video.getId(), aug1KstUtc);
+        updateCreatedAt(aug2Video.getId(), aug2KstUtc);
 
         when(videoServicePort.fetchVideoMetadata(eq(userUuid), any()))
                 .thenReturn(Map.of(
-                        dailyVideoUuid, new VideoMetadata(dailyVideoUuid, "일상 캡션", "https://cdn/daily.jpg"),
-                        travelVideoUuid, new VideoMetadata(travelVideoUuid, "여행 캡션", "https://cdn/travel.jpg")
+                        aug1VideoUuid, new VideoMetadata(aug1VideoUuid, "8/1 캡션", "https://cdn/aug1.jpg"),
+                        aug2VideoUuid, new VideoMetadata(aug2VideoUuid, "8/2 캡션", "https://cdn/aug2.jpg")
                 ));
 
-        mockMvc.perform(get("/api/diaries/dates/2026-08-01")
+        mockMvc.perform(get("/api/diaries/themes/{id}/timeline", theme.getId())
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.date").value("2026-08-01"))
                 .andExpect(jsonPath("$.sections.length()").value(2))
-                .andExpect(jsonPath("$.sections[0].themeName").value("일상"))
-                .andExpect(jsonPath("$.sections[0].videos[0].caption").value("일상 캡션"))
-                .andExpect(jsonPath("$.sections[0].videos[0].thumbnailUrl").value("https://cdn/daily.jpg"))
-                .andExpect(jsonPath("$.sections[1].themeName").value("여행"))
-                .andExpect(jsonPath("$.sections[1].videos[0].caption").value("여행 캡션"));
+                .andExpect(jsonPath("$.sections[0].date").value("2026-08-02"))
+                .andExpect(jsonPath("$.sections[0].videos[0].caption").value("8/2 캡션"))
+                .andExpect(jsonPath("$.sections[1].date").value("2026-08-01"))
+                .andExpect(jsonPath("$.sections[1].videos[0].thumbnailUrl").value("https://cdn/aug1.jpg"));
     }
 
     @Test
-    void getDateTimeline_excludesSoftDeletedVideosAndThemes() throws Exception {
-        DiaryTheme activeTheme = diaryThemePersistenceAdapter.save(
+    void getThemeTimeline_excludesSoftDeletedVideosAndOtherThemes() throws Exception {
+        DiaryTheme targetTheme = diaryThemePersistenceAdapter.save(
                 DiaryTheme.create(userUuid, "일상", UUID.randomUUID())
         );
-        DiaryTheme deletedTheme = diaryThemePersistenceAdapter.save(
-                DiaryTheme.create(userUuid, "삭제됨", UUID.randomUUID())
+        DiaryTheme otherTheme = diaryThemePersistenceAdapter.save(
+                DiaryTheme.create(userUuid, "여행", UUID.randomUUID())
         );
-        diaryVideoPersistenceAdapter.save(DiaryVideo.create(deletedTheme.getId(), UUID.randomUUID()));
-        diaryThemePersistenceAdapter.softDelete(deletedTheme.getId());
 
         DiaryVideo active = diaryVideoPersistenceAdapter.save(
-                DiaryVideo.create(activeTheme.getId(), UUID.randomUUID())
+                DiaryVideo.create(targetTheme.getId(), UUID.randomUUID())
         );
         DiaryVideo deleted = diaryVideoPersistenceAdapter.save(
-                DiaryVideo.create(activeTheme.getId(), UUID.randomUUID())
+                DiaryVideo.create(targetTheme.getId(), UUID.randomUUID())
         );
         diaryVideoPersistenceAdapter.softDelete(deleted.getId());
+        diaryVideoPersistenceAdapter.save(DiaryVideo.create(otherTheme.getId(), UUID.randomUUID()));
 
-        LocalDateTime aug1KstUtc = KstDateTimes.startOfDay(
-                java.time.LocalDate.of(2026, 8, 1)
-        ).plusHours(5);
-        updateCreatedAt(active.getId(), aug1KstUtc);
+        updateCreatedAt(
+                active.getId(),
+                KstDateTimes.startOfDay(java.time.LocalDate.of(2026, 8, 1)).plusHours(1)
+        );
 
         when(videoServicePort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
 
-        mockMvc.perform(get("/api/diaries/dates/2026-08-01")
+        mockMvc.perform(get("/api/diaries/themes/{id}/timeline", targetTheme.getId())
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(1))
@@ -133,40 +135,46 @@ class DateTimelineControllerTest {
     }
 
     @Test
-    void getDateTimeline_emptyWhenNoVideosOnDate() throws Exception {
-        mockMvc.perform(get("/api/diaries/dates/2026-08-01")
-                        .header(DateTimelineController.USER_UUID_HEADER, userUuid))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.sections.length()").value(0));
-    }
-
-    @Test
-    void getDateTimeline_doesNotReturnOtherUserVideos() throws Exception {
+    void getThemeTimeline_emptyWhenNoVideos() throws Exception {
         DiaryTheme theme = diaryThemePersistenceAdapter.save(
                 DiaryTheme.create(userUuid, "일상", UUID.randomUUID())
         );
-        DiaryVideo video = diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
-        updateCreatedAt(
-                video.getId(),
-                KstDateTimes.startOfDay(java.time.LocalDate.of(2026, 8, 1)).plusHours(1)
-        );
 
-        UUID otherUser = UUID.randomUUID();
-        mockMvc.perform(get("/api/diaries/dates/2026-08-01")
-                        .header(DateTimelineController.USER_UUID_HEADER, otherUser))
+        mockMvc.perform(get("/api/diaries/themes/{id}/timeline", theme.getId())
+                        .header(DateTimelineController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(0));
     }
 
     @Test
-    void getDateTimeline_invalidDate_returnsBadRequest() throws Exception {
-        mockMvc.perform(get("/api/diaries/dates/2026-13-40")
+    void getThemeTimeline_returnsNotFoundForOtherUserTheme() throws Exception {
+        DiaryTheme theme = diaryThemePersistenceAdapter.save(
+                DiaryTheme.create(userUuid, "일상", UUID.randomUUID())
+        );
+
+        UUID otherUser = UUID.randomUUID();
+        mockMvc.perform(get("/api/diaries/themes/{id}/timeline", theme.getId())
+                        .header(DateTimelineController.USER_UUID_HEADER, otherUser))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("THEME_001"));
+    }
+
+    @Test
+    void getThemeTimeline_returnsNotFoundForDeletedTheme() throws Exception {
+        DiaryTheme theme = diaryThemePersistenceAdapter.save(
+                DiaryTheme.create(userUuid, "일상", UUID.randomUUID())
+        );
+        diaryThemePersistenceAdapter.softDelete(theme.getId());
+
+        mockMvc.perform(get("/api/diaries/themes/{id}/timeline", theme.getId())
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("COMMON_001"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("THEME_001"));
     }
 
     private void updateCreatedAt(Long videoId, LocalDateTime createdAt) {
         jdbcTemplate.update("UPDATE diary_videos SET created_at = ? WHERE id = ?", createdAt, videoId);
+        entityManager.flush();
+        entityManager.clear();
     }
 }

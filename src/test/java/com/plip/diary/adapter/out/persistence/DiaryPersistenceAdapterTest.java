@@ -102,8 +102,12 @@ class DiaryPersistenceAdapterTest {
         DiaryTheme theme = diaryThemePersistenceAdapter.save(
                 DiaryTheme.create(userUuid, "일상", UUID.randomUUID())
         );
-        diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
-        diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
+        DiaryVideo first = diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
+        DiaryVideo second = diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
+
+        LocalDateTime todayUtc = KstDateTimes.startOfToday().plusHours(1);
+        updateCreatedAt(first.getId(), todayUtc);
+        updateCreatedAt(second.getId(), todayUtc.plusMinutes(1));
 
         assertThat(diaryVideoPersistenceAdapter.countTodayByUserUuid(userUuid)).isEqualTo(2);
     }
@@ -118,14 +122,40 @@ class DiaryPersistenceAdapterTest {
         DiaryVideo second = diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
         DiaryVideo third = diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
 
-        LocalDateTime aug1Utc = KstDateTimes.startOfMonthKstAsUtcLocalDateTime(2026, 8).plusHours(1);
-        updateCreatedAt(first.getId(), aug1Utc);
-        updateCreatedAt(second.getId(), aug1Utc.plusHours(2));
-        updateCreatedAt(third.getId(), KstDateTimes.startOfNextMonthKstAsUtcLocalDateTime(2026, 8));
+        LocalDateTime aug1Kst = KstDateTimes.startOfMonth(2026, 8).plusHours(1);
+        updateCreatedAt(first.getId(), aug1Kst);
+        updateCreatedAt(second.getId(), aug1Kst.plusHours(2));
+        updateCreatedAt(third.getId(), KstDateTimes.startOfNextMonth(2026, 8));
 
         List<LocalDate> dates = diaryVideoPersistenceAdapter.findDistinctWrittenDatesInMonth(userUuid, 2026, 8);
 
         assertThat(dates).containsExactly(LocalDate.of(2026, 8, 1));
+    }
+
+    @Test
+    void findByThemeIdAndUserUuid_excludesSoftDeletedAndOtherUsers() {
+        UUID userUuid = UUID.randomUUID();
+        UUID otherUserUuid = UUID.randomUUID();
+        DiaryTheme theme = diaryThemePersistenceAdapter.save(
+                DiaryTheme.create(userUuid, "일상", UUID.randomUUID())
+        );
+        DiaryTheme otherTheme = diaryThemePersistenceAdapter.save(
+                DiaryTheme.create(otherUserUuid, "타인", UUID.randomUUID())
+        );
+
+        DiaryVideo active = diaryVideoPersistenceAdapter.save(
+                DiaryVideo.create(theme.getId(), UUID.randomUUID())
+        );
+        DiaryVideo deleted = diaryVideoPersistenceAdapter.save(
+                DiaryVideo.create(theme.getId(), UUID.randomUUID())
+        );
+        diaryVideoPersistenceAdapter.softDelete(deleted.getId());
+        diaryVideoPersistenceAdapter.save(DiaryVideo.create(otherTheme.getId(), UUID.randomUUID()));
+
+        List<DiaryVideo> videos = diaryVideoPersistenceAdapter.findByThemeIdAndUserUuid(theme.getId(), userUuid);
+
+        assertThat(videos).hasSize(1);
+        assertThat(videos.get(0).getId()).isEqualTo(active.getId());
     }
 
     private void updateCreatedAt(Long videoId, LocalDateTime createdAt) {
