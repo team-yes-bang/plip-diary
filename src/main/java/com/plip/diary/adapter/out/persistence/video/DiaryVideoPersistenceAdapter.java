@@ -9,7 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.plip.diary.global.time.KstDateTimes;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -66,5 +68,17 @@ public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
     public void softDelete(Long id) {
         diaryVideoSpringDataRepository.findById(id)
                 .ifPresent(DiaryVideoJpaEntity::markDeleted);
+    }
+
+    @Override
+    public List<LocalDate> findDistinctWrittenDatesInMonth(UUID userUuid, int year, int month) {
+        LocalDateTime start = KstDateTimes.startOfMonthKstAsUtcLocalDateTime(year, month);
+        LocalDateTime end = KstDateTimes.startOfNextMonthKstAsUtcLocalDateTime(year, month);
+        return diaryVideoSpringDataRepository.findCreatedAtInMonthByUserUuid(userUuid, start, end)
+                .stream()
+                .map(KstDateTimes::toKstLocalDate)
+                .distinct()
+                .sorted()
+                .toList();
     }
 }

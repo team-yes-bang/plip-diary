@@ -4,12 +4,17 @@ import com.plip.diary.adapter.out.persistence.theme.DiaryThemePersistenceAdapter
 import com.plip.diary.adapter.out.persistence.video.DiaryVideoPersistenceAdapter;
 import com.plip.diary.domain.model.DiaryTheme;
 import com.plip.diary.domain.model.DiaryVideo;
+import com.plip.diary.global.time.KstDateTimes;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,6 +29,9 @@ class DiaryPersistenceAdapterTest {
 
     @Autowired
     private DiaryVideoPersistenceAdapter diaryVideoPersistenceAdapter;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Test
     void saveAndFindTheme() {
@@ -98,5 +106,29 @@ class DiaryPersistenceAdapterTest {
         diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
 
         assertThat(diaryVideoPersistenceAdapter.countTodayByUserUuid(userUuid)).isEqualTo(2);
+    }
+
+    @Test
+    void findDistinctWrittenDatesInMonth_groupsByKstDate() {
+        UUID userUuid = UUID.randomUUID();
+        DiaryTheme theme = diaryThemePersistenceAdapter.save(
+                DiaryTheme.create(userUuid, "일상", UUID.randomUUID())
+        );
+        DiaryVideo first = diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
+        DiaryVideo second = diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
+        DiaryVideo third = diaryVideoPersistenceAdapter.save(DiaryVideo.create(theme.getId(), UUID.randomUUID()));
+
+        LocalDateTime aug1Utc = KstDateTimes.startOfMonthKstAsUtcLocalDateTime(2026, 8).plusHours(1);
+        updateCreatedAt(first.getId(), aug1Utc);
+        updateCreatedAt(second.getId(), aug1Utc.plusHours(2));
+        updateCreatedAt(third.getId(), KstDateTimes.startOfNextMonthKstAsUtcLocalDateTime(2026, 8));
+
+        List<LocalDate> dates = diaryVideoPersistenceAdapter.findDistinctWrittenDatesInMonth(userUuid, 2026, 8);
+
+        assertThat(dates).containsExactly(LocalDate.of(2026, 8, 1));
+    }
+
+    private void updateCreatedAt(Long videoId, LocalDateTime createdAt) {
+        jdbcTemplate.update("UPDATE diary_videos SET created_at = ? WHERE id = ?", createdAt, videoId);
     }
 }

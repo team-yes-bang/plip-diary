@@ -9,6 +9,8 @@ servers:
 tags:
 - name: Theme
   description: 다이어리 테마 API
+- name: Calendar
+  description: 캘린더 API
 - name: Diary Video
   description: 다이어리 영상 API
 paths:
@@ -140,6 +142,39 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ThemeResponse"
+  /api/diaries/calendar:
+    get:
+      tags:
+      - Calendar
+      summary: 월별 작성일 조회
+      description: 캘린더 dot 표시용 작성일 목록. 활성 테마·영상만 포함. 영상 메타·썸네일 미포함.
+      operationId: getCalendar
+      parameters:
+      - name: X-User-Uuid
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: year
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - name: month
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CalendarResponse"
   /api/diaries/videos/{diaryVideoId}:
     delete:
       tags:
@@ -225,3 +260,23 @@ components:
           description: 활성 테마 목록
           items:
             $ref: "#/components/schemas/ThemeResponse"
+    CalendarResponse:
+      type: object
+      description: 월별 캘린더 인디케이터 응답
+      properties:
+        year:
+          type: integer
+          format: int32
+          description: 조회 연도
+          example: 2026
+        month:
+          type: integer
+          format: int32
+          description: 조회 월
+          example: 8
+        dates:
+          type: array
+          description: "영상 작성일 목록 (KST, ISO-8601 date)"
+          items:
+            type: string
+            format: date
