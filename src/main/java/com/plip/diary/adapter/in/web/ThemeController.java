@@ -51,7 +51,7 @@ public class ThemeController {
     @Operation(
             summary = "테마 메타 단건 조회",
             description = "테마 이름·생성일 등 **메타 정보만** 반환. "
-                    + "테마에 포함된 영상 목록은 `GET /api/diaries/themes/{id}/timeline` (Phase 4-3) 사용."
+                    + "테마에 포함된 영상 목록은 `GET /api/diaries/themes/{id}/timeline` 사용."
     )
     @GetMapping("/{id}")
     public ThemeResponse getTheme(

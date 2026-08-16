@@ -128,6 +128,32 @@ class DiaryPersistenceAdapterTest {
         assertThat(dates).containsExactly(LocalDate.of(2026, 8, 1));
     }
 
+    @Test
+    void findByThemeIdAndUserUuid_excludesSoftDeletedAndOtherUsers() {
+        UUID userUuid = UUID.randomUUID();
+        UUID otherUserUuid = UUID.randomUUID();
+        DiaryTheme theme = diaryThemePersistenceAdapter.save(
+                DiaryTheme.create(userUuid, "일상", UUID.randomUUID())
+        );
+        DiaryTheme otherTheme = diaryThemePersistenceAdapter.save(
+                DiaryTheme.create(otherUserUuid, "타인", UUID.randomUUID())
+        );
+
+        DiaryVideo active = diaryVideoPersistenceAdapter.save(
+                DiaryVideo.create(theme.getId(), UUID.randomUUID())
+        );
+        DiaryVideo deleted = diaryVideoPersistenceAdapter.save(
+                DiaryVideo.create(theme.getId(), UUID.randomUUID())
+        );
+        diaryVideoPersistenceAdapter.softDelete(deleted.getId());
+        diaryVideoPersistenceAdapter.save(DiaryVideo.create(otherTheme.getId(), UUID.randomUUID()));
+
+        List<DiaryVideo> videos = diaryVideoPersistenceAdapter.findByThemeIdAndUserUuid(theme.getId(), userUuid);
+
+        assertThat(videos).hasSize(1);
+        assertThat(videos.get(0).getId()).isEqualTo(active.getId());
+    }
+
     private void updateCreatedAt(Long videoId, LocalDateTime createdAt) {
         jdbcTemplate.update("UPDATE diary_videos SET created_at = ? WHERE id = ?", createdAt, videoId);
     }

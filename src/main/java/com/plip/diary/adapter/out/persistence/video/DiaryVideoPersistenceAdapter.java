@@ -93,4 +93,12 @@ public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
                 .map(diaryVideoMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<DiaryVideo> findByThemeIdAndUserUuid(Long themeId, UUID userUuid) {
+        return diaryVideoSpringDataRepository.findByThemeIdAndUserUuid(themeId, userUuid)
+                .stream()
+                .map(diaryVideoMapper::toDomain)
+                .toList();
+    }
 }

@@ -31,4 +31,6 @@ public interface DiaryVideoPersistencePort {
     List<LocalDate> findDistinctWrittenDatesInMonth(UUID userUuid, int year, int month);
 
     List<DiaryVideo> findByUserUuidAndCreatedAtRange(UUID userUuid, LocalDateTime start, LocalDateTime end);
+
+    List<DiaryVideo> findByThemeIdAndUserUuid(Long themeId, UUID userUuid);
 }

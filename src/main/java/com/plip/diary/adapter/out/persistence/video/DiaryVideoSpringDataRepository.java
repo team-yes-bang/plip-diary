@@ -75,4 +75,18 @@ interface DiaryVideoSpringDataRepository extends JpaRepository<DiaryVideoJpaEnti
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
+
+    @Query("""
+            SELECT v FROM DiaryVideoJpaEntity v, DiaryThemeJpaEntity t
+            WHERE v.themeId = :themeId
+            AND v.themeId = t.id
+            AND t.userUuid = :userUuid
+            AND v.deletedAt IS NULL
+            AND t.deletedAt IS NULL
+            ORDER BY v.createdAt DESC
+            """)
+    List<DiaryVideoJpaEntity> findByThemeIdAndUserUuid(
+            @Param("themeId") Long themeId,
+            @Param("userUuid") UUID userUuid
+    );
 }
