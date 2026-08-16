@@ -9,6 +9,7 @@ import com.plip.diary.application.port.in.DeleteThemeUseCase;
 import com.plip.diary.application.port.in.GetThemeUseCase;
 import com.plip.diary.application.port.in.ListThemesUseCase;
 import com.plip.diary.application.port.in.UpdateThemeUseCase;
+import com.plip.diary.global.web.RequestHeaders;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -33,7 +34,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ThemeController {
 
-    static final String USER_UUID_HEADER = "X-User-Uuid";
+    public static final String USER_UUID_HEADER = RequestHeaders.USER_UUID_HEADER;
 
     private final CreateThemeUseCase createThemeUseCase;
     private final ListThemesUseCase listThemesUseCase;

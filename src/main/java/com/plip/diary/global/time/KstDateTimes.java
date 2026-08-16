@@ -30,6 +30,14 @@ public final class KstDateTimes {
         return toUtcLocalDateTime(firstOfNextMonth.atStartOfDay(ZONE));
     }
 
+    public static LocalDateTime startOfDayKstAsUtcLocalDateTime(LocalDate date) {
+        return toUtcLocalDateTime(date.atStartOfDay(ZONE));
+    }
+
+    public static LocalDateTime startOfNextDayKstAsUtcLocalDateTime(LocalDate date) {
+        return toUtcLocalDateTime(date.plusDays(1).atStartOfDay(ZONE));
+    }
+
     public static LocalDate toKstLocalDate(LocalDateTime utcLocalDateTime) {
         return utcLocalDateTime.atOffset(ZoneOffset.UTC)
                 .atZoneSameInstant(ZONE)
