@@ -2,6 +2,8 @@ package com.plip.diary.adapter.in.kafka;
 
 import com.plip.diary.adapter.in.kafka.dto.UserRegisteredEvent;
 import com.plip.diary.adapter.in.kafka.dto.VideoUploadedEvent;
+import com.plip.diary.adapter.out.mongodb.VideoMetadataMongoAdapter;
+import com.plip.diary.adapter.out.redis.VideoMetadataRedisAdapter;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.domain.model.DiaryTheme;
@@ -25,6 +27,7 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -65,6 +68,12 @@ class KafkaConsumerIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @MockitoBean
+    private VideoMetadataMongoAdapter videoMetadataMongoAdapter;
+
+    @MockitoBean
+    private VideoMetadataRedisAdapter videoMetadataRedisAdapter;
 
     @Test
     void consumeUserRegisteredEvent_createsDefaultTheme() throws Exception {
@@ -117,7 +126,7 @@ class KafkaConsumerIntegrationTest {
 
         videoUploadedKafkaTemplate.send(
                 VIDEO_UPLOADED_TOPIC,
-                new VideoUploadedEvent(themeUuid, videoUuid, userUuid)
+                new VideoUploadedEvent(themeUuid, videoUuid, userUuid, null, null)
         ).get(5, TimeUnit.SECONDS);
 
         waitUntil(() -> diaryVideoPersistencePort.existsByThemeIdAndVideoUuid(theme.getId(), videoUuid));
@@ -153,7 +162,7 @@ class KafkaConsumerIntegrationTest {
         UUID themeUuid = UUID.randomUUID();
         UUID videoUuid = UUID.randomUUID();
         DiaryTheme theme = diaryThemePersistencePort.save(DiaryTheme.create(userUuid, "일상", themeUuid));
-        VideoUploadedEvent event = new VideoUploadedEvent(themeUuid, videoUuid, userUuid);
+        VideoUploadedEvent event = new VideoUploadedEvent(themeUuid, videoUuid, userUuid, null, null);
 
         videoUploadedKafkaTemplate.send(VIDEO_UPLOADED_TOPIC, event).get(5, TimeUnit.SECONDS);
         videoUploadedKafkaTemplate.send(VIDEO_UPLOADED_TOPIC, event).get(5, TimeUnit.SECONDS);
@@ -180,7 +189,7 @@ class KafkaConsumerIntegrationTest {
         UUID overflowVideoUuid = UUID.randomUUID();
         videoUploadedKafkaTemplate.send(
                 VIDEO_UPLOADED_TOPIC,
-                new VideoUploadedEvent(themeUuid, overflowVideoUuid, userUuid)
+                new VideoUploadedEvent(themeUuid, overflowVideoUuid, userUuid, null, null)
         ).get(5, TimeUnit.SECONDS);
 
         waitUntil(() -> !diaryVideoPersistencePort.existsByThemeIdAndVideoUuid(theme.getId(), overflowVideoUuid));

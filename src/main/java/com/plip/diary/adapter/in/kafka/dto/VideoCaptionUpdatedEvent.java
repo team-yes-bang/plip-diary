@@ -7,11 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record VideoUploadedEvent(
-        @JsonProperty("theme_uuid")
-        @JsonAlias("themeUuid")
-        UUID themeUuid,
-
+public record VideoCaptionUpdatedEvent(
         @JsonProperty("video_uuid")
         @JsonAlias("videoUuid")
         UUID videoUuid,

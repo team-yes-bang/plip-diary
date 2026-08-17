@@ -44,8 +44,9 @@ class BindVideoServiceTest {
         when(diaryVideoPersistencePort.countTodayByUserUuid(userUuid)).thenReturn(0L);
         when(diaryVideoPersistencePort.existsByThemeIdAndVideoUuid(1L, videoUuid)).thenReturn(false);
 
-        bindVideoService.bindVideo(themeUuid, videoUuid, userUuid);
+        boolean bound = bindVideoService.bindVideo(themeUuid, videoUuid, userUuid);
 
+        assertThat(bound).isTrue();
         ArgumentCaptor<DiaryVideo> captor = ArgumentCaptor.forClass(DiaryVideo.class);
         verify(diaryVideoPersistencePort).save(captor.capture());
         DiaryVideo saved = captor.getValue();
@@ -58,7 +59,7 @@ class BindVideoServiceTest {
         UUID themeUuid = UUID.randomUUID();
         when(diaryThemePersistencePort.findByThemeUuid(themeUuid)).thenReturn(Optional.empty());
 
-        bindVideoService.bindVideo(themeUuid, UUID.randomUUID(), UUID.randomUUID());
+        assertThat(bindVideoService.bindVideo(themeUuid, UUID.randomUUID(), UUID.randomUUID())).isFalse();
 
         verify(diaryVideoPersistencePort, never()).save(any());
     }
@@ -70,7 +71,7 @@ class BindVideoServiceTest {
         DiaryTheme theme = DiaryTheme.reconstitute(1L, themeUuid, UUID.randomUUID(), "일상", null, null, null);
         when(diaryThemePersistencePort.findByThemeUuid(themeUuid)).thenReturn(Optional.of(theme));
 
-        bindVideoService.bindVideo(themeUuid, UUID.randomUUID(), userUuid);
+        assertThat(bindVideoService.bindVideo(themeUuid, UUID.randomUUID(), userUuid)).isFalse();
 
         verify(diaryVideoPersistencePort, never()).save(any());
     }
@@ -85,7 +86,7 @@ class BindVideoServiceTest {
         when(diaryVideoPersistencePort.countTodayByUserUuid(userUuid))
                 .thenReturn((long) BindVideoService.DAILY_VIDEO_LIMIT);
 
-        bindVideoService.bindVideo(themeUuid, UUID.randomUUID(), userUuid);
+        assertThat(bindVideoService.bindVideo(themeUuid, UUID.randomUUID(), userUuid)).isFalse();
 
         verify(diaryVideoPersistencePort, never()).save(any());
     }
@@ -101,7 +102,7 @@ class BindVideoServiceTest {
         when(diaryVideoPersistencePort.countTodayByUserUuid(userUuid)).thenReturn(0L);
         when(diaryVideoPersistencePort.existsByThemeIdAndVideoUuid(1L, videoUuid)).thenReturn(true);
 
-        bindVideoService.bindVideo(themeUuid, videoUuid, userUuid);
+        assertThat(bindVideoService.bindVideo(themeUuid, videoUuid, userUuid)).isFalse();
 
         verify(diaryVideoPersistencePort, never()).save(any());
         verify(diaryVideoPersistencePort).existsByThemeIdAndVideoUuid(eq(1L), eq(videoUuid));

@@ -2,6 +2,7 @@ package com.plip.diary.adapter.in.kafka;
 
 import com.plip.diary.adapter.in.kafka.dto.VideoUploadedEvent;
 import com.plip.diary.application.port.in.BindVideoUseCase;
+import com.plip.diary.application.service.VideoMetadataSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 public class VideoUploadedConsumer {
 
     private final BindVideoUseCase bindVideoUseCase;
+    private final VideoMetadataSyncService videoMetadataSyncService;
 
     @KafkaListener(
             topics = "${app.kafka.topics.video-uploaded:video.uploaded}",
@@ -29,6 +31,14 @@ public class VideoUploadedConsumer {
             );
             return;
         }
+
         bindVideoUseCase.bindVideo(event.themeUuid(), event.videoUuid(), event.userUuid());
+        // projection upsert는 MySQL 바인딩 성공 여부와 무관 — 멱등 upsert·Mongo 실패 후 Kafka retry 복구
+        videoMetadataSyncService.upsertFromUploaded(
+                event.userUuid(),
+                event.videoUuid(),
+                event.caption(),
+                event.thumbnailUrl()
+        );
     }
 }

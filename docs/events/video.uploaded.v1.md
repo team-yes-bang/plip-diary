@@ -18,6 +18,8 @@ video-service에서 영상 업로드 완료 시 발행하는 이벤트. diary-se
   "themeUuid": "01912345-6789-7abc-def0-123456789abc",
   "videoUuid": "01912345-6789-7abc-def0-123456789abd",
   "userUuid": "01912345-6789-7abc-def0-123456789abe",
+  "caption": "캡션",
+  "thumbnailUrl": "https://cdn.example/thumb.jpg",
   "occurredAt": "2026-08-12T11:00:00"
 }
 ```
@@ -27,6 +29,8 @@ video-service에서 영상 업로드 완료 시 발행하는 이벤트. diary-se
 | `themeUuid` | string (UUIDv7) | Y | Y — `diary_themes.theme_uuid` lookup |
 | `videoUuid` | string (UUIDv7) | Y | Y — `diary_videos.video_uuid` |
 | `userUuid` | string (UUIDv7) | Y | Y — 소유권 검증 |
+| `caption` | string | N | Y — Phase 5-2 Mongo projection upsert (null 허용) |
+| `thumbnailUrl` | string | N | Y — Phase 5-2 Mongo projection upsert (null 허용) |
 | `occurredAt` | string (ISO 8601) | N | N |
 
 > diary Consumer는 `themeUuid`, `videoUuid`, `userUuid`를 사용한다. `@JsonAlias`로 snake_case도 수용.
@@ -39,6 +43,7 @@ video-service에서 영상 업로드 완료 시 발행하는 이벤트. diary-se
 4. KST 당일 유저 전체 20건 limit (`deleted_at IS NULL`, 테마 구분 없음) — 초과 시 warn + skip
 5. 동일 `(theme_id, video_uuid)` 활성 row 존재 시 멱등 skip
 6. `diary_videos` INSERT
+7. 바인딩 성공 시 Mongo `diary_video_metadata` upsert + Redis evict (Phase 5-2)
 
 ## 발행 시점 (video-service)
 

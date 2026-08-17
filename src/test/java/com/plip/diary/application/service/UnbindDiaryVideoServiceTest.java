@@ -28,6 +28,9 @@ class UnbindDiaryVideoServiceTest {
     @Mock
     private VideoDeletedEventPort videoDeletedEventPort;
 
+    @Mock
+    private VideoMetadataSyncService videoMetadataSyncService;
+
     @InjectMocks
     private UnbindDiaryVideoService unbindDiaryVideoService;
 
@@ -47,11 +50,13 @@ class UnbindDiaryVideoServiceTest {
 
             verify(diaryVideoPersistencePort).softDelete(diaryVideoId);
             verify(videoDeletedEventPort, never()).publish(videoUuid, userUuid);
+            verify(videoMetadataSyncService, never()).remove(userUuid, videoUuid);
 
             TransactionSynchronizationManager.getSynchronizations()
                     .forEach(sync -> sync.afterCommit());
 
             verify(videoDeletedEventPort).publish(videoUuid, userUuid);
+            verify(videoMetadataSyncService).remove(userUuid, videoUuid);
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
         }
@@ -70,5 +75,9 @@ class UnbindDiaryVideoServiceTest {
 
         verify(diaryVideoPersistencePort, never()).softDelete(diaryVideoId);
         verify(videoDeletedEventPort, never()).publish(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        verify(videoMetadataSyncService, never()).remove(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
     }
 }

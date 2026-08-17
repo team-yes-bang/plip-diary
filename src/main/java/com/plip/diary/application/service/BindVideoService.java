@@ -24,11 +24,11 @@ public class BindVideoService implements BindVideoUseCase {
 
     @Override
     @Transactional
-    public void bindVideo(UUID themeUuid, UUID videoUuid, UUID userUuid) {
+    public boolean bindVideo(UUID themeUuid, UUID videoUuid, UUID userUuid) {
         DiaryTheme theme = diaryThemePersistencePort.findByThemeUuid(themeUuid).orElse(null);
         if (theme == null) {
             log.warn("video.uploaded themeUuid 미존재 — skip themeUuid={}", themeUuid);
-            return;
+            return false;
         }
 
         if (!theme.getUserUuid().equals(userUuid)) {
@@ -38,18 +38,19 @@ public class BindVideoService implements BindVideoUseCase {
                     userUuid,
                     theme.getUserUuid()
             );
-            return;
+            return false;
         }
 
         if (diaryVideoPersistencePort.countTodayByUserUuid(userUuid) >= DAILY_VIDEO_LIMIT) {
             log.warn("video.uploaded 당일 영상 한도 초과 — skip userUuid={}", userUuid);
-            return;
+            return false;
         }
 
         if (diaryVideoPersistencePort.existsByThemeIdAndVideoUuid(theme.getId(), videoUuid)) {
-            return;
+            return false;
         }
 
         diaryVideoPersistencePort.save(DiaryVideo.create(theme.getId(), videoUuid));
+        return true;
     }
 }

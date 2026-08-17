@@ -51,4 +51,25 @@ class VideoUploadedEventTest {
         assertThat(event.videoUuid()).isEqualTo(videoUuid);
         assertThat(event.userUuid()).isEqualTo(userUuid);
     }
+
+    @Test
+    void deserialize_optionalCaptionAndThumbnail() throws Exception {
+        UUID themeUuid = UUID.randomUUID();
+        UUID videoUuid = UUID.randomUUID();
+        UUID userUuid = UUID.randomUUID();
+        String json = """
+                {
+                  "themeUuid": "%s",
+                  "videoUuid": "%s",
+                  "userUuid": "%s",
+                  "caption": "캡션",
+                  "thumbnailUrl": "https://cdn.example/thumb.jpg"
+                }
+                """.formatted(themeUuid, videoUuid, userUuid);
+
+        VideoUploadedEvent event = objectMapper.readValue(json, VideoUploadedEvent.class);
+
+        assertThat(event.caption()).isEqualTo("캡션");
+        assertThat(event.thumbnailUrl()).isEqualTo("https://cdn.example/thumb.jpg");
+    }
 }
