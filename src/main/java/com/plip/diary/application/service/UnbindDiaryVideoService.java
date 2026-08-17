@@ -19,6 +19,7 @@ public class UnbindDiaryVideoService implements UnbindDiaryVideoUseCase {
 
     private final DiaryVideoPersistencePort diaryVideoPersistencePort;
     private final VideoDeletedEventPort videoDeletedEventPort;
+    private final VideoMetadataSyncService videoMetadataSyncService;
 
     @Override
     @Transactional
@@ -33,6 +34,7 @@ public class UnbindDiaryVideoService implements UnbindDiaryVideoUseCase {
             @Override
             public void afterCommit() {
                 videoDeletedEventPort.publish(videoUuid, userUuid);
+                videoMetadataSyncService.remove(userUuid, videoUuid);
             }
         });
     }

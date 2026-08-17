@@ -1,6 +1,7 @@
 package com.plip.diary.global.config;
 
 import com.plip.diary.adapter.in.kafka.dto.UserRegisteredEvent;
+import com.plip.diary.adapter.in.kafka.dto.VideoCaptionUpdatedEvent;
 import com.plip.diary.adapter.in.kafka.dto.VideoUploadedEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -51,6 +52,19 @@ public class KafkaConsumerConfig {
         ConcurrentKafkaListenerContainerFactory<String, VideoUploadedEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(videoUploadedConsumerFactory());
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, VideoCaptionUpdatedEvent> videoCaptionUpdatedConsumerFactory() {
+        return createConsumerFactory(VideoCaptionUpdatedEvent.class);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, VideoCaptionUpdatedEvent> videoCaptionUpdatedKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, VideoCaptionUpdatedEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(videoCaptionUpdatedConsumerFactory());
         return factory;
     }
 

@@ -4,5 +4,8 @@ import java.util.UUID;
 
 public interface BindVideoUseCase {
 
-    void bindVideo(UUID themeUuid, UUID videoUuid, UUID userUuid);
+  /**
+   * @return 바인딩 INSERT 성공 시 true, skip·멱등 시 false
+   */
+    boolean bindVideo(UUID themeUuid, UUID videoUuid, UUID userUuid);
 }

@@ -10,5 +10,7 @@ public interface VideoMetadataProjectionPort {
 
     void upsert(VideoMetadataProjection projection);
 
+    void patchCaption(UUID userUuid, UUID videoUuid, String caption);
+
     void deleteByVideoUuid(UUID userUuid, UUID videoUuid);
 }
