@@ -6,14 +6,12 @@ import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class QuerySidePropertiesTest {
+class VideoMetadataCachePropertiesTest {
 
     @Test
-    void defaults_keepPhase4Behavior() {
-        QuerySideProperties properties = new QuerySideProperties();
+    void defaults_cacheTtlTwentyFourHours() {
+        VideoMetadataCacheProperties properties = new VideoMetadataCacheProperties();
 
-        assertThat(properties.isEnabled()).isFalse();
-        assertThat(properties.isFallbackHttpEnabled()).isTrue();
         assertThat(properties.getCacheTtl()).isEqualTo(Duration.ofHours(24));
     }
 }

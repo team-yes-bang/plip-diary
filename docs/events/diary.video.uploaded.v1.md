@@ -1,15 +1,18 @@
-# video.uploaded v1
+# diary.video.uploaded v1
 
-video-service에서 영상 업로드 완료 시 발행하는 이벤트. diary-service는 이 이벤트를 구독하여 `diary_videos`에 `video_uuid`를 바인딩한다.
+video-service에서 **다이어리 영상** 업로드 완료 시 발행하는 이벤트. diary-service가 구독하여 `diary_videos`에 바인딩한다.
+
+> 토픽(그룹) 영상 업로드는 `topic.video.uploaded`(topic-service 구독). 본 토픽은 diary-service 전용.
 
 ## Topic
 
 | 항목 | 값 |
 | --- | --- |
-| Topic | `video.uploaded` |
+| Topic | `diary.video.uploaded` |
 | Consumer Group | `diary-service` |
-| Message Key | `videoUuid` (video-service 발행 기준) |
+| Message Key | `videoUuid` |
 | Value format | JSON |
+| Consumer | **diary-service** |
 
 ## Payload (video-service 발행 기준)
 
@@ -29,28 +32,26 @@ video-service에서 영상 업로드 완료 시 발행하는 이벤트. diary-se
 | `themeUuid` | string (UUIDv7) | Y | Y — `diary_themes.theme_uuid` lookup |
 | `videoUuid` | string (UUIDv7) | Y | Y — `diary_videos.video_uuid` |
 | `userUuid` | string (UUIDv7) | Y | Y — 소유권 검증 |
-| `caption` | string | N | Y — Phase 5-2 Mongo projection upsert (null 허용) |
-| `thumbnailUrl` | string | N | Y — Phase 5-2 Mongo projection upsert (null 허용) |
+| `caption` | string | N | Y — Mongo projection upsert |
+| `thumbnailUrl` | string | N | Y — Mongo projection upsert |
 | `occurredAt` | string (ISO 8601) | N | N |
-
-> diary Consumer는 `themeUuid`, `videoUuid`, `userUuid`를 사용한다. `@JsonAlias`로 snake_case도 수용.
 
 ## Consumer 동작 (diary-service)
 
-1. `themeUuid`, `videoUuid`, `userUuid` 추출
+1. `themeUuid`, `videoUuid`, `userUuid` 추출 — 누락 시 warn + skip
 2. `theme_uuid`로 활성 `diary_themes` 조회 — 없으면 warn + skip
 3. `user_uuid` 일치 검증 — 불일치 시 warn + skip
-4. KST 당일 유저 전체 20건 limit (`deleted_at IS NULL`, 테마 구분 없음) — 초과 시 warn + skip
+4. KST 당일 유저 전체 20건 limit — 초과 시 warn + skip
 5. 동일 `(theme_id, video_uuid)` 활성 row 존재 시 멱등 skip
-6. `diary_videos` INSERT
-7. 바인딩 성공 시 Mongo `diary_video_metadata` upsert + Redis evict (Phase 5-2)
+6. 신규 바인딩 시 `diary_videos` INSERT → afterCommit `diary.video.linked` 발행
+7. **항상** Mongo `diary_video_metadata` upsert + Redis evict (멱등·재처리 복구)
 
 ## 발행 시점 (video-service)
 
-- 영상 업로드 완료 후 `video` row 생성 직후
+- 다이어리 영상 업로드 완료 후 `video` row 생성 직후
 
 ## 버전 이력
 
 | 버전 | 변경 |
 | --- | --- |
-| v1 | 최초 정의 — video-service payload(camelCase) 정합 |
+| v1 | `video.uploaded` 대체 — 구독 주체(diary) 명시 |

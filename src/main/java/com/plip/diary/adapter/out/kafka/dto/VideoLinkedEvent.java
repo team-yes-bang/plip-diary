@@ -6,14 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record VideoDeletedEvent(
+public record VideoLinkedEvent(
         @JsonProperty("video_uuid")
         @JsonAlias("videoUuid")
         UUID videoUuid,
-
-        @JsonProperty("user_uuid")
-        @JsonAlias("userUuid")
-        UUID userUuid,
 
         @JsonProperty("occurred_at")
         @JsonAlias("occurredAt")

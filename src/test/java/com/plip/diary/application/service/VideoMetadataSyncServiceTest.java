@@ -28,11 +28,11 @@ class VideoMetadataSyncServiceTest {
     private VideoMetadataSyncService videoMetadataSyncService;
 
     @Test
-    void upsertFromUploaded_upsertsAndEvicts() {
+    void upsertFromBind_upsertsAndEvicts() {
         UUID userUuid = UUID.randomUUID();
         UUID videoUuid = UUID.randomUUID();
 
-        videoMetadataSyncService.upsertFromUploaded(userUuid, videoUuid, "캡션", "https://cdn/thumb.jpg");
+        videoMetadataSyncService.upsertFromBind(userUuid, videoUuid, "캡션", "https://cdn/thumb.jpg");
 
         ArgumentCaptor<VideoMetadataProjection> captor = ArgumentCaptor.forClass(VideoMetadataProjection.class);
         verify(videoMetadataProjectionPort).upsert(captor.capture());
@@ -41,18 +41,6 @@ class VideoMetadataSyncServiceTest {
         assertThat(projection.userUuid()).isEqualTo(userUuid);
         assertThat(projection.caption()).isEqualTo("캡션");
         assertThat(projection.thumbnailUrl()).isEqualTo("https://cdn/thumb.jpg");
-        assertThat(projection.updatedAt()).isNotNull();
-        verify(videoMetadataCachePort).evict(userUuid, videoUuid);
-    }
-
-    @Test
-    void patchCaptionFromUpdated_patchesAndEvicts() {
-        UUID userUuid = UUID.randomUUID();
-        UUID videoUuid = UUID.randomUUID();
-
-        videoMetadataSyncService.patchCaptionFromUpdated(userUuid, videoUuid, "수정");
-
-        verify(videoMetadataProjectionPort).patchCaption(userUuid, videoUuid, "수정");
         verify(videoMetadataCachePort).evict(userUuid, videoUuid);
     }
 

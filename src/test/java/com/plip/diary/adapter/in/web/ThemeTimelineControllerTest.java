@@ -53,7 +53,7 @@ class ThemeTimelineControllerTest {
     private EntityManager entityManager;
 
     @MockitoBean
-    private VideoServicePort videoServicePort;
+    private VideoServicePort videoMetadataEnrichmentPort;
 
     private UUID userUuid;
 
@@ -86,7 +86,7 @@ class ThemeTimelineControllerTest {
         updateCreatedAt(aug1Video.getId(), aug1KstUtc);
         updateCreatedAt(aug2Video.getId(), aug2KstUtc);
 
-        when(videoServicePort.fetchVideoMetadata(eq(userUuid), any()))
+        when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any()))
                 .thenReturn(Map.of(
                         aug1VideoUuid, new VideoMetadata(aug1VideoUuid, "8/1 캡션", "https://cdn/aug1.jpg"),
                         aug2VideoUuid, new VideoMetadata(aug2VideoUuid, "8/2 캡션", "https://cdn/aug2.jpg")
@@ -125,7 +125,7 @@ class ThemeTimelineControllerTest {
                 KstDateTimes.startOfDay(java.time.LocalDate.of(2026, 8, 1)).plusHours(1)
         );
 
-        when(videoServicePort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
+        when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
 
         mockMvc.perform(get("/api/diaries/themes/{id}/timeline", targetTheme.getId())
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))

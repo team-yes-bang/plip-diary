@@ -48,7 +48,7 @@ class DateTimelineControllerTest {
     private JdbcTemplate jdbcTemplate;
 
     @MockitoBean
-    private VideoServicePort videoServicePort;
+    private VideoServicePort videoMetadataEnrichmentPort;
 
     private UUID userUuid;
 
@@ -81,7 +81,7 @@ class DateTimelineControllerTest {
         updateCreatedAt(dailyVideo.getId(), aug1KstUtc);
         updateCreatedAt(travelVideo.getId(), aug1KstUtc.plusHours(2));
 
-        when(videoServicePort.fetchVideoMetadata(eq(userUuid), any()))
+        when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any()))
                 .thenReturn(Map.of(
                         dailyVideoUuid, new VideoMetadata(dailyVideoUuid, "일상 캡션", "https://cdn/daily.jpg"),
                         travelVideoUuid, new VideoMetadata(travelVideoUuid, "여행 캡션", "https://cdn/travel.jpg")
@@ -123,7 +123,7 @@ class DateTimelineControllerTest {
         ).plusHours(5);
         updateCreatedAt(active.getId(), aug1KstUtc);
 
-        when(videoServicePort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
+        when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
 
         mockMvc.perform(get("/api/diaries/dates/2026-08-01")
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))

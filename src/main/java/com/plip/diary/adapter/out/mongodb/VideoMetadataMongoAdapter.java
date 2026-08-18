@@ -6,7 +6,6 @@ import com.plip.diary.application.port.out.VideoMetadataQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,20 +39,6 @@ public class VideoMetadataMongoAdapter implements VideoMetadataProjectionPort, V
         document.setCaption(projection.caption());
         document.setThumbnailUrl(projection.thumbnailUrl());
         document.setUpdatedAt(projection.updatedAt());
-
-        diaryVideoMetadataMongoRepository.save(document);
-    }
-
-    @Override
-    public void patchCaption(UUID userUuid, UUID videoUuid, String caption) {
-        DiaryVideoMetadataDocument document = diaryVideoMetadataMongoRepository
-                .findById(videoUuid)
-                .orElseGet(DiaryVideoMetadataDocument::new);
-
-        document.setVideoUuid(videoUuid);
-        document.setUserUuid(userUuid);
-        document.setCaption(caption);
-        document.setUpdatedAt(LocalDateTime.now());
 
         diaryVideoMetadataMongoRepository.save(document);
     }

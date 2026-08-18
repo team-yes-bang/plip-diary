@@ -80,28 +80,6 @@ class VideoMetadataMongoAdapterTest {
     }
 
     @Test
-    void patchCaption_updatesCaption() {
-        UUID userUuid = UUID.randomUUID();
-        UUID videoUuid = UUID.randomUUID();
-        DiaryVideoMetadataDocument existing = new DiaryVideoMetadataDocument();
-        existing.setVideoUuid(videoUuid);
-        existing.setUserUuid(userUuid);
-        existing.setCaption("기존");
-        existing.setThumbnailUrl("https://cdn/old.jpg");
-
-        when(diaryVideoMetadataMongoRepository.findById(videoUuid)).thenReturn(Optional.of(existing));
-
-        adapter.patchCaption(userUuid, videoUuid, "수정");
-
-        ArgumentCaptor<DiaryVideoMetadataDocument> captor = ArgumentCaptor.forClass(DiaryVideoMetadataDocument.class);
-        verify(diaryVideoMetadataMongoRepository).save(captor.capture());
-        DiaryVideoMetadataDocument patched = captor.getValue();
-        assertThat(patched.getCaption()).isEqualTo("수정");
-        assertThat(patched.getThumbnailUrl()).isEqualTo("https://cdn/old.jpg");
-        assertThat(patched.getUpdatedAt()).isNotNull();
-    }
-
-    @Test
     void deleteByVideoUuid_deletesWhenUserMatches() {
         UUID userUuid = UUID.randomUUID();
         UUID videoUuid = UUID.randomUUID();

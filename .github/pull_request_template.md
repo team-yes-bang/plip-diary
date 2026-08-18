@@ -32,7 +32,7 @@
 - [ ] (DDL 변경 시) `docs/sql/schema.sql` 갱신·커밋
 - [ ] 수동 테스트 (아래 — 페이즈 유형에 맞는 형식)
 
-### REST API 페이즈
+### REST API 페이즈 (Phase 4-x)
 
 **공통** — Base URL, API (메서드·경로), 헤더·파라미터, 사전 조건(시드 SQL → 확인 SELECT)
 
@@ -42,12 +42,24 @@
 
 시드 SQL (본문에 전문 포함)
 
-### Kafka Consumer·Read Model 동기화 페이즈 (5-2 등)
+### Kafka Consumer·Read Model 동기화 (Phase 5-2 등)
 
 **요약만** 작성 ([plip-diary-project.mdc §4-1-B-B](.cursor/rules/plip-diary-project.mdc)). kafka-ui 단계·Fixture·JSON·시드 SQL **전문은 PR에 넣지 않음** — 페이즈 완료 결과창 §4에 상세 출력.
 
 **수동 테스트 요약**
 - 검증 대상:
+- 미검증:
+
+| # | 시나리오 | 핵심 기대 |
+| --- | --- | --- |
+| 1 | | |
+
+### Read Model 조회 전환 (Phase 5-3 등)
+
+**요약만** 작성 ([plip-diary-project.mdc §4-1-C-B](.cursor/rules/plip-diary-project.mdc)). MySQL 시드 SQL·mongosh·redis-cli·Fixture UUID **전문은 PR에 넣지 않음** — 페이즈 완료 결과창 §4에 상세 출력.
+
+**수동 테스트 요약 (Read Model 조회 전환)**
+- 검증:
 - 미검증:
 
 | # | 시나리오 | 핵심 기대 |

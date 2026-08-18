@@ -1,8 +1,7 @@
 package com.plip.diary.global.config;
 
+import com.plip.diary.adapter.in.kafka.dto.DiaryVideoUploadedEvent;
 import com.plip.diary.adapter.in.kafka.dto.UserRegisteredEvent;
-import com.plip.diary.adapter.in.kafka.dto.VideoCaptionUpdatedEvent;
-import com.plip.diary.adapter.in.kafka.dto.VideoUploadedEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,28 +42,15 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public ConsumerFactory<String, VideoUploadedEvent> videoUploadedConsumerFactory() {
-        return createConsumerFactory(VideoUploadedEvent.class);
+    public ConsumerFactory<String, DiaryVideoUploadedEvent> diaryVideoUploadedConsumerFactory() {
+        return createConsumerFactory(DiaryVideoUploadedEvent.class);
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, VideoUploadedEvent> videoUploadedKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, VideoUploadedEvent> factory =
+    public ConcurrentKafkaListenerContainerFactory<String, DiaryVideoUploadedEvent> diaryVideoUploadedKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, DiaryVideoUploadedEvent> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(videoUploadedConsumerFactory());
-        return factory;
-    }
-
-    @Bean
-    public ConsumerFactory<String, VideoCaptionUpdatedEvent> videoCaptionUpdatedConsumerFactory() {
-        return createConsumerFactory(VideoCaptionUpdatedEvent.class);
-    }
-
-    @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, VideoCaptionUpdatedEvent> videoCaptionUpdatedKafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, VideoCaptionUpdatedEvent> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(videoCaptionUpdatedConsumerFactory());
+        factory.setConsumerFactory(diaryVideoUploadedConsumerFactory());
         return factory;
     }
 

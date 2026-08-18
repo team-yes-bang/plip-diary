@@ -16,6 +16,8 @@ public enum ErrorCode {
 
     // Diary Video
     DIARY_VIDEO_NOT_FOUND(HttpStatus.NOT_FOUND, "VIDEO_001", "다이어리 영상을 찾을 수 없습니다."),
+    DIARY_VIDEO_TOPIC_TRANSFER_NOT_ALLOWED(HttpStatus.CONFLICT, "VIDEO_004", "당일 등록한 다이어리 영상만 토픽으로 이동할 수 있습니다."),
+    DIARY_VIDEO_TOPIC_COPY_NOT_ON_DIARY(HttpStatus.BAD_REQUEST, "VIDEO_005", "다이어리→토픽 복사는 topic-service API에서 처리한다."),
 
     // Common (user-service COMMON_* 정합)
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "COMMON_001", "입력값이 올바르지 않습니다."),

@@ -29,7 +29,7 @@ public class DateTimelineController {
 
     @Operation(
             summary = "날짜별 다이어리 조회",
-            description = "특정일(KST) 영상을 테마별 섹션으로 반환. `diary_videos` + video-service 썸네일·캡션 enrichment. "
+            description = "특정일(KST) 영상을 테마별 섹션으로 반환. `diary_videos` + Read Model(캡션·썸네일) enrichment. "
                     + "테마 전체 목록은 `GET /api/diaries/themes` 별도 호출."
     )
     @GetMapping("/api/diaries/dates/{date}")
@@ -42,7 +42,7 @@ public class DateTimelineController {
 
     @Operation(
             summary = "테마별 다이어리 조회",
-            description = "특정 테마의 영상을 날짜별 섹션으로 반환. `diary_videos` + video-service 썸네일·캡션 enrichment. "
+            description = "특정 테마의 영상을 날짜별 섹션으로 반환. `diary_videos` + Read Model(캡션·썸네일) enrichment. "
                     + "테마 메타는 `GET /api/diaries/themes/{id}` 별도 호출."
     )
     @GetMapping("/api/diaries/themes/{id}/timeline")

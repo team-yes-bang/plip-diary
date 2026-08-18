@@ -18,6 +18,36 @@ tags:
 - name: Timeline
   description: 다이어리 타임라인 API
 paths:
+  /api/diaries/videos/{diaryVideoId}/topic-transfer:
+    post:
+      tags:
+      - Diary Video
+      summary: 다이어리 영상 → 토픽 복사·이동
+      description: "topic-service에 영상 등록이 끝난 뒤(MOVE), 다이어리 타임라인에서 제거. `diary.video.unlinked`\
+        \ 발행. COPY는 topic-service API 사용."
+      operationId: transferDiaryVideoToTopic
+      parameters:
+      - name: X-User-Uuid
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: diaryVideoId
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferDiaryVideoToTopicRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
   /api/diaries/themes:
     get:
       tags:
@@ -151,8 +181,8 @@ paths:
       tags:
       - Timeline
       summary: 테마별 다이어리 조회
-      description: "특정 테마의 영상을 날짜별 섹션으로 반환. `diary_videos` + video-service 썸네일·캡션\
-        \ enrichment. 테마 메타는 `GET /api/diaries/themes/{id}` 별도 호출."
+      description: "특정 테마의 영상을 날짜별 섹션으로 반환. `diary_videos` + Read Model(캡션·썸네일) enrichment.\
+        \ 테마 메타는 `GET /api/diaries/themes/{id}` 별도 호출."
       operationId: getThemeTimeline
       parameters:
       - name: X-User-Uuid
@@ -179,9 +209,9 @@ paths:
       tags:
       - Home
       summary: 홈 피드 조회
-      description: "KST 오늘(0건이어도 포함) + 영상이 있는 최신 2일, 일자별 최대 4건. `diary_videos` + video-service\
-        \ 썸네일·캡션 enrichment. 테마 전체 목록은 `GET /api/diaries/themes` 별도 호출. 특정일 전체는 `GET\
-        \ /api/diaries/dates/{date}`."
+      description: "KST 오늘(0건이어도 포함) + 영상이 있는 최신 2일, 일자별 최대 4건. `diary_videos` + Read\
+        \ Model(캡션·썸네일) enrichment. 테마 전체 목록은 `GET /api/diaries/themes` 별도 호출. 특정일\
+        \ 전체는 `GET /api/diaries/dates/{date}`."
       operationId: getHomeFeed
       parameters:
       - name: X-User-Uuid
@@ -202,8 +232,8 @@ paths:
       tags:
       - Timeline
       summary: 날짜별 다이어리 조회
-      description: 특정일(KST) 영상을 테마별 섹션으로 반환. `diary_videos` + video-service 썸네일·캡션
-        enrichment. 테마 전체 목록은 `GET /api/diaries/themes` 별도 호출.
+      description: 특정일(KST) 영상을 테마별 섹션으로 반환. `diary_videos` + Read Model(캡션·썸네일) enrichment.
+        테마 전체 목록은 `GET /api/diaries/themes` 별도 호출.
       operationId: getDateTimeline
       parameters:
       - name: X-User-Uuid
@@ -263,7 +293,7 @@ paths:
       tags:
       - Diary Video
       summary: 다이어리 영상 바인딩 해제
-      description: 타임라인에서 영상 항목 제거. `diary_videos` Soft Delete 후 `diary.video.deleted`
+      description: 타임라인에서 영상 항목 제거. `diary_videos` Soft Delete 후 `diary.video.unlinked`
         Kafka 발행.
       operationId: unbindDiaryVideo
       parameters:
@@ -284,6 +314,19 @@ paths:
           description: OK
 components:
   schemas:
+    TransferDiaryVideoToTopicRequest:
+      type: object
+      description: 다이어리 영상 → 토픽 이동 요청 (diary 담당 구간)
+      properties:
+        mode:
+          type: string
+          description: "MOVE: topic-service 바인딩 완료 후 다이어리 타임라인에서 제거. COPY는 topic-service\
+            \ API 사용"
+          enum:
+          - COPY
+          - MOVE
+      required:
+      - mode
     CreateThemeRequest:
       type: object
       description: 테마 생성 요청
@@ -378,14 +421,14 @@ components:
         videoUuid:
           type: string
           format: uuid
-          description: 영상 UUID (video-service 참조)
+          description: "영상 UUID (video-service 발급, diary 참조)"
           example: 01912345-6789-7abc-def0-123456789abd
         caption:
           type: string
-          description: 캡션 (video-service enrichment)
+          description: 캡션 (Read Model enrichment)
         thumbnailUrl:
           type: string
-          description: 썸네일 URL (video-service enrichment)
+          description: 썸네일 URL (Read Model enrichment)
         createdAt:
           type: string
           format: date-time
@@ -434,14 +477,14 @@ components:
         videoUuid:
           type: string
           format: uuid
-          description: 영상 UUID (video-service 참조)
+          description: "영상 UUID (video-service 발급, diary 참조)"
           example: 01912345-6789-7abc-def0-123456789abd
         caption:
           type: string
-          description: 캡션 (video-service enrichment)
+          description: 캡션 (Read Model enrichment)
         thumbnailUrl:
           type: string
-          description: 썸네일 URL (video-service enrichment)
+          description: 썸네일 URL (Read Model enrichment)
         createdAt:
           type: string
           format: date-time
@@ -490,14 +533,14 @@ components:
         videoUuid:
           type: string
           format: uuid
-          description: 영상 UUID (video-service 참조)
+          description: "영상 UUID (video-service 발급, diary 참조)"
           example: 01912345-6789-7abc-def0-123456789abd
         caption:
           type: string
-          description: 캡션 (video-service enrichment)
+          description: 캡션 (Read Model enrichment)
         thumbnailUrl:
           type: string
-          description: 썸네일 URL (video-service enrichment)
+          description: 썸네일 URL (Read Model enrichment)
         createdAt:
           type: string
           format: date-time
