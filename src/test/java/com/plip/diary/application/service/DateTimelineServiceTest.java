@@ -35,7 +35,7 @@ class DateTimelineServiceTest {
     private DiaryThemePersistencePort diaryThemePersistencePort;
 
     @Mock
-    private VideoServicePort videoServicePort;
+    private VideoServicePort videoMetadataEnrichmentPort;
 
     @InjectMocks
     private DateTimelineService dateTimelineService;
@@ -83,7 +83,7 @@ class DateTimelineServiceTest {
                 .thenReturn(List.of(video));
         when(diaryThemePersistencePort.findAllByUserUuid(userUuid))
                 .thenReturn(List.of(dailyTheme, travelTheme));
-        when(videoServicePort.fetchVideoMetadata(userUuid, List.of(videoUuid)))
+        when(videoMetadataEnrichmentPort.fetchVideoMetadata(userUuid, List.of(videoUuid)))
                 .thenReturn(Map.of(videoUuid, new VideoMetadata(videoUuid, "캡션", "https://cdn/thumb.jpg")));
 
         DateTimeline result = dateTimelineService.getDateTimeline(userUuid, date);
@@ -95,6 +95,6 @@ class DateTimelineServiceTest {
         assertThat(result.sections().get(0).videos().get(0).caption()).isEqualTo("캡션");
         assertThat(result.sections().get(0).videos().get(0).thumbnailUrl()).isEqualTo("https://cdn/thumb.jpg");
 
-        verify(videoServicePort).fetchVideoMetadata(userUuid, List.of(videoUuid));
+        verify(videoMetadataEnrichmentPort).fetchVideoMetadata(userUuid, List.of(videoUuid));
     }
 }

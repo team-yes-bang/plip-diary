@@ -24,7 +24,7 @@ public class HomeFeedController {
     @Operation(
             summary = "홈 피드 조회",
             description = "KST 오늘(0건이어도 포함) + 영상이 있는 최신 2일, 일자별 최대 4건. "
-                    + "`diary_videos` + video-service 썸네일·캡션 enrichment. "
+                    + "`diary_videos` + Read Model(캡션·썸네일) enrichment. "
                     + "테마 전체 목록은 `GET /api/diaries/themes` 별도 호출. 특정일 전체는 `GET /api/diaries/dates/{date}`."
     )
     @GetMapping("/api/diaries/home")

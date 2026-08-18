@@ -114,9 +114,24 @@ services:
     networks:
       - plip-net
 
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: plip-diary-redisinsight
+    restart: unless-stopped
+    ports:
+      - "${REDISINSIGHT_PORT:-5540}:5540"
+    volumes:
+      - plip_diary_redisinsight_data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - plip-net
+
 volumes:
   plip_diary_mysql_data:
   plip_diary_mongo_data:
+  plip_diary_redisinsight_data:
 
 networks:
   plip-net:

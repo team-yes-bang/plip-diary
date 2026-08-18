@@ -53,7 +53,7 @@ class HomeFeedControllerTest {
     private EntityManager entityManager;
 
     @MockitoBean
-    private VideoServicePort videoServicePort;
+    private VideoServicePort videoMetadataEnrichmentPort;
 
     private UUID userUuid;
 
@@ -86,7 +86,7 @@ class HomeFeedControllerTest {
                 KstDateTimes.startOfDay(KstDateTimes.today().minusDays(2)).plusHours(9)
         );
 
-        when(videoServicePort.fetchVideoMetadata(eq(userUuid), any()))
+        when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any()))
                 .thenReturn(Map.of(
                         yesterdayVideoUuid, new VideoMetadata(yesterdayVideoUuid, "어제", "https://cdn/y.jpg"),
                         twoDaysAgoVideoUuid, new VideoMetadata(twoDaysAgoVideoUuid, "그제", "https://cdn/t.jpg")
@@ -137,7 +137,7 @@ class HomeFeedControllerTest {
                 KstDateTimes.startOfDay(KstDateTimes.today().minusDays(2)).plusHours(1)
         );
 
-        when(videoServicePort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
+        when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
 
         mockMvc.perform(get("/api/diaries/home")
                         .header(HomeFeedController.USER_UUID_HEADER, userUuid))
@@ -171,7 +171,7 @@ class HomeFeedControllerTest {
                 KstDateTimes.startOfDay(KstDateTimes.today()).plusHours(1)
         );
 
-        when(videoServicePort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
+        when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
 
         mockMvc.perform(get("/api/diaries/home")
                         .header(HomeFeedController.USER_UUID_HEADER, userUuid))

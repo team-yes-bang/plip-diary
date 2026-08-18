@@ -5,8 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Redis look-aside 캐시 포트 — CQRS Query side.
- * <p>Phase 5-1: 인터페이스·stub Adapter. Phase 5-2 evict, Phase 5-3 cache-aside 조회.</p>
+ * 영상 메타 Redis look-aside 캐시 포트 — CQRS Query side.
  */
 public interface VideoMetadataCachePort {
 

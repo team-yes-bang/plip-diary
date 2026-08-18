@@ -34,7 +34,7 @@ public class HomeFeedService implements GetHomeFeedUseCase {
 
     private final DiaryVideoPersistencePort diaryVideoPersistencePort;
     private final DiaryThemePersistencePort diaryThemePersistencePort;
-    private final VideoServicePort videoServicePort;
+    private final VideoServicePort videoMetadataEnrichmentPort;
 
     @Override
     public HomeFeed getHomeFeed(UUID userUuid) {
@@ -71,7 +71,7 @@ public class HomeFeedService implements GetHomeFeedUseCase {
                 .toList();
         Map<UUID, VideoMetadata> metadataByVideoUuid = videoUuids.isEmpty()
                 ? Map.of()
-                : videoServicePort.fetchVideoMetadata(userUuid, videoUuids);
+                : videoMetadataEnrichmentPort.fetchVideoMetadata(userUuid, videoUuids);
 
         List<HomeFeedSection> sections = sectionDates.stream()
                 .map(date -> toSection(

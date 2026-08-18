@@ -19,9 +19,7 @@ spring:
       - org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration
 
 diary:
-  query-side:
-    enabled: false
-    fallback-http-enabled: true
+  video-metadata-cache:
     cache-ttl: 24h
 
 eureka:

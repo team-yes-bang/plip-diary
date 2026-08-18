@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * 타임라인 조회용 영상 메타(캡션·썸네일) enrichment 포트.
- * <p>Phase 4-2~4-4: {@code VideoServiceHttpAdapter}(조회 시 video-service REST batch).</p>
- * <p>Phase 5-3: Read Model Adapter로 구현 교체 — Service·Controller·본 인터페이스는 유지.</p>
+ * 타임라인 조회용 영상 메타(caption·thumbnail) enrichment 아웃바운드 포트.
+ * <p>구현: {@link com.plip.diary.adapter.out.query.VideoMetadataQueryAdapter} — Redis look-aside → Mongo projection.</p>
+ * <p>이름의 {@code VideoService}는 cross-service {@code video_uuid} 출처를 뜻하며, 조회 시 video-service HTTP 호출을 의미하지 않는다.</p>
  */
 public interface VideoServicePort {
 

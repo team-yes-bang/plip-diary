@@ -27,7 +27,7 @@ public class DateTimelineService implements GetDateTimelineUseCase {
 
     private final DiaryVideoPersistencePort diaryVideoPersistencePort;
     private final DiaryThemePersistencePort diaryThemePersistencePort;
-    private final VideoServicePort videoServicePort;
+    private final VideoServicePort videoMetadataEnrichmentPort;
 
     @Override
     public DateTimeline getDateTimeline(UUID userUuid, LocalDate date) {
@@ -45,7 +45,7 @@ public class DateTimelineService implements GetDateTimelineUseCase {
         List<UUID> videoUuids = videos.stream()
                 .map(DiaryVideo::getVideoUuid)
                 .toList();
-        Map<UUID, VideoMetadata> metadataByVideoUuid = videoServicePort.fetchVideoMetadata(userUuid, videoUuids);
+        Map<UUID, VideoMetadata> metadataByVideoUuid = videoMetadataEnrichmentPort.fetchVideoMetadata(userUuid, videoUuids);
 
         List<DateTimelineSection> sections = diaryThemePersistencePort.findAllByUserUuid(userUuid).stream()
                 .filter(theme -> videosByThemeId.containsKey(theme.getId()))

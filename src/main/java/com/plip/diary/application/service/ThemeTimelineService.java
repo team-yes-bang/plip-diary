@@ -27,7 +27,7 @@ public class ThemeTimelineService implements GetThemeTimelineUseCase {
 
     private final DiaryThemePersistencePort diaryThemePersistencePort;
     private final DiaryVideoPersistencePort diaryVideoPersistencePort;
-    private final VideoServicePort videoServicePort;
+    private final VideoServicePort videoMetadataEnrichmentPort;
 
     @Override
     public ThemeTimeline getThemeTimeline(UUID userUuid, Long themeId) {
@@ -42,7 +42,7 @@ public class ThemeTimelineService implements GetThemeTimelineUseCase {
         List<UUID> videoUuids = videos.stream()
                 .map(DiaryVideo::getVideoUuid)
                 .toList();
-        Map<UUID, VideoMetadata> metadataByVideoUuid = videoServicePort.fetchVideoMetadata(userUuid, videoUuids);
+        Map<UUID, VideoMetadata> metadataByVideoUuid = videoMetadataEnrichmentPort.fetchVideoMetadata(userUuid, videoUuids);
 
         Map<LocalDate, List<DiaryVideo>> videosByDate = videos.stream()
                 .collect(Collectors.groupingBy(video -> KstDateTimes.toLocalDate(video.getCreatedAt())));

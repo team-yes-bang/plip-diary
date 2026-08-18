@@ -56,13 +56,13 @@ record HomeFeedVideoResponse(
         @Schema(description = "테마 이름", example = "일상")
         String themeName,
 
-        @Schema(description = "영상 UUID (video-service 참조)", example = "01912345-6789-7abc-def0-123456789abd")
+        @Schema(description = "영상 UUID (video-service 발급, diary 참조)", example = "01912345-6789-7abc-def0-123456789abd")
         UUID videoUuid,
 
-        @Schema(description = "캡션 (video-service enrichment)")
+        @Schema(description = "캡션 (Read Model enrichment)")
         String caption,
 
-        @Schema(description = "썸네일 URL (video-service enrichment)")
+        @Schema(description = "썸네일 URL (Read Model enrichment)")
         String thumbnailUrl,
 
         @Schema(description = "바인딩 시각")

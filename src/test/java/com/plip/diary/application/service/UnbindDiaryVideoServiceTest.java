@@ -1,7 +1,7 @@
 package com.plip.diary.application.service;
 
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
-import com.plip.diary.application.port.out.VideoDeletedEventPort;
+import com.plip.diary.application.port.out.VideoUnlinkedEventPort;
 import com.plip.diary.domain.model.DiaryVideo;
 import com.plip.diary.global.exception.DiaryVideoNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ class UnbindDiaryVideoServiceTest {
     private DiaryVideoPersistencePort diaryVideoPersistencePort;
 
     @Mock
-    private VideoDeletedEventPort videoDeletedEventPort;
+    private VideoUnlinkedEventPort videoUnlinkedEventPort;
 
     @Mock
     private VideoMetadataSyncService videoMetadataSyncService;
@@ -49,13 +49,13 @@ class UnbindDiaryVideoServiceTest {
             unbindDiaryVideoService.unbindDiaryVideo(userUuid, diaryVideoId);
 
             verify(diaryVideoPersistencePort).softDelete(diaryVideoId);
-            verify(videoDeletedEventPort, never()).publish(videoUuid, userUuid);
+            verify(videoUnlinkedEventPort, never()).publish(videoUuid);
             verify(videoMetadataSyncService, never()).remove(userUuid, videoUuid);
 
             TransactionSynchronizationManager.getSynchronizations()
                     .forEach(sync -> sync.afterCommit());
 
-            verify(videoDeletedEventPort).publish(videoUuid, userUuid);
+            verify(videoUnlinkedEventPort).publish(videoUuid);
             verify(videoMetadataSyncService).remove(userUuid, videoUuid);
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
@@ -74,7 +74,7 @@ class UnbindDiaryVideoServiceTest {
                 .isInstanceOf(DiaryVideoNotFoundException.class);
 
         verify(diaryVideoPersistencePort, never()).softDelete(diaryVideoId);
-        verify(videoDeletedEventPort, never()).publish(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        verify(videoUnlinkedEventPort, never()).publish(org.mockito.ArgumentMatchers.any());
         verify(videoMetadataSyncService, never()).remove(
                 org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.any()

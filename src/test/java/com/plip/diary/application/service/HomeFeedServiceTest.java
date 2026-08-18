@@ -38,7 +38,7 @@ class HomeFeedServiceTest {
     private DiaryThemePersistencePort diaryThemePersistencePort;
 
     @Mock
-    private VideoServicePort videoServicePort;
+    private VideoServicePort videoMetadataEnrichmentPort;
 
     @InjectMocks
     private HomeFeedService homeFeedService;
@@ -55,7 +55,7 @@ class HomeFeedServiceTest {
         assertThat(result.sections()).hasSize(1);
         assertThat(result.sections().get(0).date()).isEqualTo(KstDateTimes.today());
         assertThat(result.sections().get(0).videos()).isEmpty();
-        verifyNoInteractions(videoServicePort);
+        verifyNoInteractions(videoMetadataEnrichmentPort);
     }
 
     @Test
@@ -75,7 +75,7 @@ class HomeFeedServiceTest {
         when(diaryVideoPersistencePort.findByUserUuidAndCreatedAtRange(eq(userUuid), any(), any()))
                 .thenReturn(List.of(yesterdayVideo, twoDaysAgoVideo));
         when(diaryThemePersistencePort.findAllByUserUuid(userUuid)).thenReturn(List.of(theme));
-        when(videoServicePort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
+        when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
 
         HomeFeed result = homeFeedService.getHomeFeed(userUuid);
 
@@ -107,7 +107,7 @@ class HomeFeedServiceTest {
         when(diaryVideoPersistencePort.findByUserUuidAndCreatedAtRange(eq(userUuid), any(), any()))
                 .thenReturn(List.of(todayVideo, twoDaysAgoVideo, fourDaysAgoVideo));
         when(diaryThemePersistencePort.findAllByUserUuid(userUuid)).thenReturn(List.of(theme));
-        when(videoServicePort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
+        when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
 
         HomeFeed result = homeFeedService.getHomeFeed(userUuid);
 
@@ -133,7 +133,7 @@ class HomeFeedServiceTest {
         when(diaryVideoPersistencePort.findByUserUuidAndCreatedAtRange(eq(userUuid), any(), any()))
                 .thenReturn(todayVideos);
         when(diaryThemePersistencePort.findAllByUserUuid(userUuid)).thenReturn(List.of(theme));
-        when(videoServicePort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
+        when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
 
         HomeFeed result = homeFeedService.getHomeFeed(userUuid);
 
@@ -155,14 +155,14 @@ class HomeFeedServiceTest {
         when(diaryVideoPersistencePort.findByUserUuidAndCreatedAtRange(eq(userUuid), any(), any()))
                 .thenReturn(List.of(todayVideo));
         when(diaryThemePersistencePort.findAllByUserUuid(userUuid)).thenReturn(List.of(theme));
-        when(videoServicePort.fetchVideoMetadata(userUuid, List.of(videoUuid)))
+        when(videoMetadataEnrichmentPort.fetchVideoMetadata(userUuid, List.of(videoUuid)))
                 .thenReturn(Map.of(videoUuid, new VideoMetadata(videoUuid, "캡션", "https://cdn/thumb.jpg")));
 
         HomeFeed result = homeFeedService.getHomeFeed(userUuid);
 
         assertThat(result.sections().get(0).videos().get(0).caption()).isEqualTo("캡션");
         assertThat(result.sections().get(0).videos().get(0).thumbnailUrl()).isEqualTo("https://cdn/thumb.jpg");
-        verify(videoServicePort).fetchVideoMetadata(userUuid, List.of(videoUuid));
+        verify(videoMetadataEnrichmentPort).fetchVideoMetadata(userUuid, List.of(videoUuid));
     }
 
     private static DiaryTheme theme(UUID userUuid, long id, String name) {

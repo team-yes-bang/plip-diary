@@ -8,12 +8,12 @@ diary-service **소유** MongoDB projection 컬렉션. Phase 5-2 Kafka Consumer�
 
 - diary-service는 **동영상 플레이어를 제공하지 않음**. 개별 뷰어·재생은 video-service.
 - diary FE **그리드 카드**(홈·날짜·테마 목록)는 정적 **썸네일 이미지** + **캡션** 오버레이로 렌더.
-- 조회 API가 `thumbnail_url`·`caption`을 내려주고, Phase 5-3에서 Mongo/Redis enrichment로 video-service 동기 HTTP를 제거.
+- 조회 API가 `thumbnail_url`·`caption`을 내려주며, Phase 5-3 완료 — Mongo/Redis Read Model enrichment(동기 HTTP 없음).
 
 | 필드 | 그리드 UI | 변경 |
 | --- | --- | --- |
 | `thumbnail_url` | 카드 배경 이미지 | 업로드 시 1회 — 이후 변경 없음 |
-| `caption` | 카드 위 텍스트 | 개별 뷰어에서 수정 가능 — `video.caption.updated`로 정합 |
+| `caption` | 카드 위 텍스트 | 업로드 시 1회 — 이후 변경 없음 |
 
 ## Collection
 
@@ -39,8 +39,8 @@ diary-service **소유** MongoDB projection 컬렉션. Phase 5-2 Kafka Consumer�
 | --- | --- | --- | --- |
 | `_id` | UUID (Binary) | Y | `video_uuid` — video-service 전역 식별자, upsert 멱등 키 |
 | `user_uuid` | UUID (Binary) | Y | 소유자. 조회·삭제 시 필터 |
-| `caption` | string | N | 그리드 카드 캡션 (`video.caption.updated`로 갱신) |
-| `thumbnail_url` | string | N | CDN 썸네일 URL (`video.uploaded` 1회만) |
+| `caption` | string | N | 그리드 카드 캡션 (바인딩 API 요청 시 1회 upsert) |
+| `thumbnail_url` | string | N | CDN 썸네일 URL (바인딩 API 요청 시 1회 upsert) |
 | `updated_at` | datetime | Y | projection 최종 갱신 시각 (UTC naive, `LocalDateTime`) |
 
 ## 인덱스
@@ -52,23 +52,23 @@ diary-service **소유** MongoDB projection 컬렉션. Phase 5-2 Kafka Consumer�
 
 > 샤딩 키 후보: `user_uuid` (5천만 사용자 규모 — 인프라 합의 후 적용).
 
-## 동기화 트리거 (Phase 5-2)
+## 동기화 트리거
 
-| 이벤트 | 발행 서비스 | diary 동작 | 스펙 문서 |
-| --- | --- | --- | --- |
-| `video.uploaded` (+ 메타 확장) | video-service | upsert — thumbnail·초기 caption | [video.uploaded.v1.md](../events/video.uploaded.v1.md) |
-| `video.caption.updated` | video-service | patch — **caption만** | [video.caption.updated.v1.md](../events/video.caption.updated.v1.md) |
-| `diary.video.deleted` | diary-service | delete (Unbind API afterCommit) | [diary.video.deleted.v1.md](../events/diary.video.deleted.v1.md) |
+| 트리거 | diary 동작 | 스펙 문서 |
+| --- | --- | --- |
+| `diary.video.uploaded` (Consumer) | upsert — thumbnail·caption (필수) + 신규 시 `diary_videos` INSERT | [diary.video.uploaded.v1.md](../events/diary.video.uploaded.v1.md) |
+| `DELETE /api/diaries/videos/{diaryVideoId}` (afterCommit) | delete + Redis evict | [diary.video.unlinked.v1.md](../events/diary.video.unlinked.v1.md) |
 
 ## 조회 사용 (Phase 5-3)
 
 - `GET /home`, `GET /dates/{date}`, `GET /themes/{id}/timeline` — thumbnail + caption batch enrichment
 - `GET /calendar` — enrichment 없음
-- Redis 키: `diary:video-meta:{userUuid}:{videoUuid}` (TTL: `diary.query-side.cache-ttl`, 기본 24h)
+- Redis 키: `diary:video-meta:{userUuid}:{videoUuid}` (TTL: `diary.video-metadata-cache.cache-ttl`, 기본 24h)
 
 ## 버전 이력
 
 | 버전 | 변경 |
 | --- | --- |
 | v1 | Phase 5-1 — 컬렉션·필드·인덱스 정의 |
-| v1.1 | Phase 5-2 — 제품 맥락·동기화 트리거(caption-only patch) 명시 |
+| v1.1 | Phase 5-2 — 제품 맥락·동기화 트리거 명시 |
+| v1.2 | `diary.video.uploaded` Consumer·`diary.video.linked`/`unlinked` 전환 |

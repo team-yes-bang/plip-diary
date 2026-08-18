@@ -36,7 +36,7 @@ class ThemeTimelineServiceTest {
     private DiaryVideoPersistencePort diaryVideoPersistencePort;
 
     @Mock
-    private VideoServicePort videoServicePort;
+    private VideoServicePort videoMetadataEnrichmentPort;
 
     @InjectMocks
     private ThemeTimelineService themeTimelineService;
@@ -99,7 +99,7 @@ class ThemeTimelineServiceTest {
                 .thenReturn(Optional.of(theme));
         when(diaryVideoPersistencePort.findByThemeIdAndUserUuid(theme.getId(), userUuid))
                 .thenReturn(List.of(aug1Video, aug2Video));
-        when(videoServicePort.fetchVideoMetadata(userUuid, List.of(videoUuid1, videoUuid2)))
+        when(videoMetadataEnrichmentPort.fetchVideoMetadata(userUuid, List.of(videoUuid1, videoUuid2)))
                 .thenReturn(Map.of(
                         videoUuid1, new VideoMetadata(videoUuid1, "8/1 캡션", "https://cdn/aug1.jpg"),
                         videoUuid2, new VideoMetadata(videoUuid2, "8/2 캡션", "https://cdn/aug2.jpg")
@@ -114,6 +114,6 @@ class ThemeTimelineServiceTest {
         assertThat(result.sections().get(1).date()).isEqualTo(LocalDate.of(2026, 8, 1));
         assertThat(result.sections().get(1).videos().get(0).thumbnailUrl()).isEqualTo("https://cdn/aug1.jpg");
 
-        verify(videoServicePort).fetchVideoMetadata(userUuid, List.of(videoUuid1, videoUuid2));
+        verify(videoMetadataEnrichmentPort).fetchVideoMetadata(userUuid, List.of(videoUuid1, videoUuid2));
     }
 }
