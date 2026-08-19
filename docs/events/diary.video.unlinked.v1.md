@@ -31,8 +31,8 @@ diary-service에서 다이어리 영상 바인딩 해제 시 발행하는 이벤
 
 ## Producer 동작 (diary-service)
 
-1. `DELETE /api/diaries/videos/{diaryVideoId}` — 바인딩 해제
-2. `POST /api/diaries/videos/{diaryVideoId}/topic-transfer` — 토픽 이동(`MOVE`) 시 다이어리 Soft Delete
+1. `DELETE /api/v1/diaries/videos/{diaryVideoId}` — 바인딩 해제
+2. `POST /api/v1/diaries/videos/{diaryVideoId}/topic-transfer` — 토픽 이동(`MOVE`) 시 다이어리 Soft Delete
 3. Mongo projection delete + Redis evict
 4. 트랜잭션 커밋 후 `diary.video.unlinked` 발행
 

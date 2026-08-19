@@ -61,7 +61,7 @@ class CalendarControllerTest {
         updateCreatedAt(first.getId(), aug1Kst.plusHours(1));
         updateCreatedAt(second.getId(), aug15Kst);
 
-        mockMvc.perform(get("/api/diaries/calendar")
+        mockMvc.perform(get("/api/v1/diaries/calendar")
                         .header(CalendarController.USER_UUID_HEADER, userUuid)
                         .param("year", "2026")
                         .param("month", "8"))
@@ -95,7 +95,7 @@ class CalendarControllerTest {
         LocalDateTime aug1Kst = KstDateTimes.startOfMonth(2026, 8).plusHours(2);
         updateCreatedAt(active.getId(), aug1Kst);
 
-        mockMvc.perform(get("/api/diaries/calendar")
+        mockMvc.perform(get("/api/v1/diaries/calendar")
                         .header(CalendarController.USER_UUID_HEADER, userUuid)
                         .param("year", "2026")
                         .param("month", "8"))
@@ -106,7 +106,7 @@ class CalendarControllerTest {
 
     @Test
     void getCalendar_emptyWhenNoVideosInMonth() throws Exception {
-        mockMvc.perform(get("/api/diaries/calendar")
+        mockMvc.perform(get("/api/v1/diaries/calendar")
                         .header(CalendarController.USER_UUID_HEADER, userUuid)
                         .param("year", "2026")
                         .param("month", "8"))
@@ -116,7 +116,7 @@ class CalendarControllerTest {
 
     @Test
     void getCalendar_invalidMonth_returnsBadRequest() throws Exception {
-        mockMvc.perform(get("/api/diaries/calendar")
+        mockMvc.perform(get("/api/v1/diaries/calendar")
                         .header(CalendarController.USER_UUID_HEADER, userUuid)
                         .param("year", "2026")
                         .param("month", "13"))
@@ -133,7 +133,7 @@ class CalendarControllerTest {
         updateCreatedAt(video.getId(), KstDateTimes.startOfMonth(2026, 8).plusHours(3));
 
         UUID otherUser = UUID.randomUUID();
-        mockMvc.perform(get("/api/diaries/calendar")
+        mockMvc.perform(get("/api/v1/diaries/calendar")
                         .header(CalendarController.USER_UUID_HEADER, otherUser)
                         .param("year", "2026")
                         .param("month", "8"))

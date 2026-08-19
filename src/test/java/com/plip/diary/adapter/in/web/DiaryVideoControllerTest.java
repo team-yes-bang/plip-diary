@@ -51,7 +51,7 @@ class DiaryVideoControllerTest {
                 DiaryVideo.create(theme.getId(), UUID.randomUUID())
         );
 
-        mockMvc.perform(delete("/api/diaries/videos/{diaryVideoId}", saved.getId())
+        mockMvc.perform(delete("/api/v1/diaries/videos/{diaryVideoId}", saved.getId())
                         .header(DiaryVideoController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isNoContent());
 
@@ -68,7 +68,7 @@ class DiaryVideoControllerTest {
         );
         UUID otherUser = UUID.randomUUID();
 
-        mockMvc.perform(delete("/api/diaries/videos/{diaryVideoId}", saved.getId())
+        mockMvc.perform(delete("/api/v1/diaries/videos/{diaryVideoId}", saved.getId())
                         .header(DiaryVideoController.USER_UUID_HEADER, otherUser))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("VIDEO_001"));
@@ -84,7 +84,7 @@ class DiaryVideoControllerTest {
         );
         diaryVideoPersistenceAdapter.softDelete(saved.getId());
 
-        mockMvc.perform(delete("/api/diaries/videos/{diaryVideoId}", saved.getId())
+        mockMvc.perform(delete("/api/v1/diaries/videos/{diaryVideoId}", saved.getId())
                         .header(DiaryVideoController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("VIDEO_001"));

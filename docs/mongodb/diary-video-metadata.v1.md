@@ -57,7 +57,7 @@ diary-service **소유** MongoDB projection 컬렉션. Phase 5-2 Kafka Consumer�
 | 트리거 | diary 동작 | 스펙 문서 |
 | --- | --- | --- |
 | `diary.video.uploaded` (Consumer) | upsert — thumbnail·caption (필수) + 신규 시 `diary_videos` INSERT | [diary.video.uploaded.v1.md](../events/diary.video.uploaded.v1.md) |
-| `DELETE /api/diaries/videos/{diaryVideoId}` (afterCommit) | delete + Redis evict | [diary.video.unlinked.v1.md](../events/diary.video.unlinked.v1.md) |
+| `DELETE /api/v1/diaries/videos/{diaryVideoId}` (afterCommit) | delete + Redis evict | [diary.video.unlinked.v1.md](../events/diary.video.unlinked.v1.md) |
 
 ## 조회 사용 (Phase 5-3)
 

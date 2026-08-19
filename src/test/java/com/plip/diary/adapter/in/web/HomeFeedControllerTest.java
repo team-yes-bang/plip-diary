@@ -92,7 +92,7 @@ class HomeFeedControllerTest {
                         twoDaysAgoVideoUuid, new VideoMetadata(twoDaysAgoVideoUuid, "그제", "https://cdn/t.jpg")
                 ));
 
-        mockMvc.perform(get("/api/diaries/home")
+        mockMvc.perform(get("/api/v1/diaries/home")
                         .header(HomeFeedController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(3))
@@ -106,7 +106,7 @@ class HomeFeedControllerTest {
 
     @Test
     void getHomeFeed_returnsTodayOnlyWhenNoVideos() throws Exception {
-        mockMvc.perform(get("/api/diaries/home")
+        mockMvc.perform(get("/api/v1/diaries/home")
                         .header(HomeFeedController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(1))
@@ -139,7 +139,7 @@ class HomeFeedControllerTest {
 
         when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
 
-        mockMvc.perform(get("/api/diaries/home")
+        mockMvc.perform(get("/api/v1/diaries/home")
                         .header(HomeFeedController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(2))
@@ -173,7 +173,7 @@ class HomeFeedControllerTest {
 
         when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
 
-        mockMvc.perform(get("/api/diaries/home")
+        mockMvc.perform(get("/api/v1/diaries/home")
                         .header(HomeFeedController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(1))
