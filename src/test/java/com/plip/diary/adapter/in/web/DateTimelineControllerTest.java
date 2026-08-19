@@ -87,7 +87,7 @@ class DateTimelineControllerTest {
                         travelVideoUuid, new VideoMetadata(travelVideoUuid, "여행 캡션", "https://cdn/travel.jpg")
                 ));
 
-        mockMvc.perform(get("/api/diaries/dates/2026-08-01")
+        mockMvc.perform(get("/api/v1/diaries/dates/2026-08-01")
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.date").value("2026-08-01"))
@@ -125,7 +125,7 @@ class DateTimelineControllerTest {
 
         when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
 
-        mockMvc.perform(get("/api/diaries/dates/2026-08-01")
+        mockMvc.perform(get("/api/v1/diaries/dates/2026-08-01")
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(1))
@@ -134,7 +134,7 @@ class DateTimelineControllerTest {
 
     @Test
     void getDateTimeline_emptyWhenNoVideosOnDate() throws Exception {
-        mockMvc.perform(get("/api/diaries/dates/2026-08-01")
+        mockMvc.perform(get("/api/v1/diaries/dates/2026-08-01")
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(0));
@@ -152,7 +152,7 @@ class DateTimelineControllerTest {
         );
 
         UUID otherUser = UUID.randomUUID();
-        mockMvc.perform(get("/api/diaries/dates/2026-08-01")
+        mockMvc.perform(get("/api/v1/diaries/dates/2026-08-01")
                         .header(DateTimelineController.USER_UUID_HEADER, otherUser))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(0));
@@ -160,7 +160,7 @@ class DateTimelineControllerTest {
 
     @Test
     void getDateTimeline_invalidDate_returnsBadRequest() throws Exception {
-        mockMvc.perform(get("/api/diaries/dates/2026-13-40")
+        mockMvc.perform(get("/api/v1/diaries/dates/2026-13-40")
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("COMMON_001"));

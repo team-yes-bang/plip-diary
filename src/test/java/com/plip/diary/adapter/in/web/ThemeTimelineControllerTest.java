@@ -92,7 +92,7 @@ class ThemeTimelineControllerTest {
                         aug2VideoUuid, new VideoMetadata(aug2VideoUuid, "8/2 캡션", "https://cdn/aug2.jpg")
                 ));
 
-        mockMvc.perform(get("/api/diaries/themes/{id}/timeline", theme.getId())
+        mockMvc.perform(get("/api/v1/diaries/themes/{id}/timeline", theme.getId())
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(2))
@@ -127,7 +127,7 @@ class ThemeTimelineControllerTest {
 
         when(videoMetadataEnrichmentPort.fetchVideoMetadata(eq(userUuid), any())).thenReturn(Map.of());
 
-        mockMvc.perform(get("/api/diaries/themes/{id}/timeline", targetTheme.getId())
+        mockMvc.perform(get("/api/v1/diaries/themes/{id}/timeline", targetTheme.getId())
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(1))
@@ -140,7 +140,7 @@ class ThemeTimelineControllerTest {
                 DiaryTheme.create(userUuid, "일상", UUID.randomUUID())
         );
 
-        mockMvc.perform(get("/api/diaries/themes/{id}/timeline", theme.getId())
+        mockMvc.perform(get("/api/v1/diaries/themes/{id}/timeline", theme.getId())
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(0));
@@ -153,7 +153,7 @@ class ThemeTimelineControllerTest {
         );
 
         UUID otherUser = UUID.randomUUID();
-        mockMvc.perform(get("/api/diaries/themes/{id}/timeline", theme.getId())
+        mockMvc.perform(get("/api/v1/diaries/themes/{id}/timeline", theme.getId())
                         .header(DateTimelineController.USER_UUID_HEADER, otherUser))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("THEME_001"));
@@ -166,7 +166,7 @@ class ThemeTimelineControllerTest {
         );
         diaryThemePersistenceAdapter.softDelete(theme.getId());
 
-        mockMvc.perform(get("/api/diaries/themes/{id}/timeline", theme.getId())
+        mockMvc.perform(get("/api/v1/diaries/themes/{id}/timeline", theme.getId())
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("THEME_001"));

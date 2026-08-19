@@ -1,0 +1,2 @@
+-- 로컬 통합 스택 MySQL 초기화 (plip_user 는 MYSQL_DATABASE 로 생성)
+CREATE DATABASE IF NOT EXISTS plip_diary;

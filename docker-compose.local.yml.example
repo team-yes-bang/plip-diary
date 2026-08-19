@@ -1,0 +1,167 @@
+# 로컬 통합 compose 템플릿 — Git 미추적
+# 전제: plip-user · plip-diary 가 형제 디렉터리 (../plip-user)
+#
+# 최초 1회:
+#   cp docker-compose.local.yml.example docker-compose.local.yml
+#   cp docker/local/mysql/init-databases.sql.example docker/local/mysql/init-databases.sql
+#
+# [L] user + diary 앱 + 공통 인프라 한 번에
+#   docker compose -f docker-compose.local.yml up -d --build
+#   docker compose -f docker-compose.local.yml down
+#
+# 포트: user 8080 · diary 8081 · Swagger http://localhost:8081/swagger-ui/index.html
+# 기존 plip-user / plip-diary 단독 compose 스택은 내린 뒤 실행 (plip-net·포트 충돌 방지)
+
+include:
+  - path: ../plip-user/docker-compose.app.yml
+  - path: docker-compose.app.yml
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: plip-local-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: plip_user
+    ports:
+      - "${MYSQL_PORT:-3308}:3306"
+    volumes:
+      - plip_local_mysql_data:/var/lib/mysql
+      - ./docker/local/mysql/init-databases.sql:/docker-entrypoint-initdb.d/02-init-databases.sql:ro
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "127.0.0.1",
+          "-uroot",
+          "-p$$MYSQL_ROOT_PASSWORD",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - plip-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: plip-local-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - plip-net
+
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: plip-local-kafka
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    networks:
+      - plip-net
+
+  mongo:
+    image: mongo:7
+    container_name: plip-local-mongo
+    restart: unless-stopped
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    environment:
+      MONGO_INITDB_DATABASE: plip_diary_read
+    volumes:
+      - plip_local_mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - plip-net
+
+  kafka-ui:
+    image: kafbat/kafka-ui:latest
+    container_name: plip-local-kafka-ui
+    restart: unless-stopped
+    ports:
+      - "${KAFKA_UI_PORT:-8090}:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_started
+    networks:
+      - plip-net
+
+  user:
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      SERVER_PORT: 8080
+      MYSQL_DATABASE: plip_user
+      MYSQL_HOST: mysql
+      REDIS_HOST: redis
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET:-change-me-local-dev-only}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-noreply@plip.app}
+    ports: !override
+      - "8080:8080"
+
+  diary:
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8081
+      MYSQL_DATABASE: plip_diary
+      MYSQL_HOST: mysql
+      REDIS_HOST: redis
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MONGO_HOST: mongo
+      SPRING_MONGODB_URI: mongodb://mongo:27017/plip_diary_read
+    ports: !override
+      - "8081:8081"
+
+volumes:
+  plip_local_mysql_data:
+  plip_local_mongo_data:
+
+networks:
+  plip-net:
+    name: plip-net

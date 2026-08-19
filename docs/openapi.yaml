@@ -18,7 +18,7 @@ tags:
 - name: Timeline
   description: 다이어리 타임라인 API
 paths:
-  /api/diaries/videos/{diaryVideoId}/topic-transfer:
+  /api/v1/diaries/videos/{diaryVideoId}/topic-transfer:
     post:
       tags:
       - Diary Video
@@ -48,7 +48,7 @@ paths:
       responses:
         "200":
           description: OK
-  /api/diaries/themes:
+  /api/v1/diaries/themes:
     get:
       tags:
       - Theme
@@ -95,12 +95,12 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ThemeResponse"
-  /api/diaries/themes/{id}:
+  /api/v1/diaries/themes/{id}:
     get:
       tags:
       - Theme
       summary: 테마 메타 단건 조회
-      description: "테마 이름·생성일 등 **메타 정보만** 반환. 테마에 포함된 영상 목록은 `GET /api/diaries/themes/{id}/timeline`\
+      description: "테마 이름·생성일 등 **메타 정보만** 반환. 테마에 포함된 영상 목록은 `GET /api/v1/diaries/themes/{id}/timeline`\
         \ 사용."
       operationId: getTheme
       parameters:
@@ -176,13 +176,13 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ThemeResponse"
-  /api/diaries/themes/{id}/timeline:
+  /api/v1/diaries/themes/{id}/timeline:
     get:
       tags:
       - Timeline
       summary: 테마별 다이어리 조회
       description: "특정 테마의 영상을 날짜별 섹션으로 반환. `diary_videos` + Read Model(캡션·썸네일) enrichment.\
-        \ 테마 메타는 `GET /api/diaries/themes/{id}` 별도 호출."
+        \ 테마 메타는 `GET /api/v1/diaries/themes/{id}` 별도 호출."
       operationId: getThemeTimeline
       parameters:
       - name: X-User-Uuid
@@ -204,14 +204,14 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/ThemeTimelineResponse"
-  /api/diaries/home:
+  /api/v1/diaries/home:
     get:
       tags:
       - Home
       summary: 홈 피드 조회
       description: "KST 오늘(0건이어도 포함) + 영상이 있는 최신 2일, 일자별 최대 4건. `diary_videos` + Read\
-        \ Model(캡션·썸네일) enrichment. 테마 전체 목록은 `GET /api/diaries/themes` 별도 호출. 특정일\
-        \ 전체는 `GET /api/diaries/dates/{date}`."
+        \ Model(캡션·썸네일) enrichment. 테마 전체 목록은 `GET /api/v1/diaries/themes` 별도 호출.\
+        \ 특정일 전체는 `GET /api/v1/diaries/dates/{date}`."
       operationId: getHomeFeed
       parameters:
       - name: X-User-Uuid
@@ -227,13 +227,13 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/HomeFeedResponse"
-  /api/diaries/dates/{date}:
+  /api/v1/diaries/dates/{date}:
     get:
       tags:
       - Timeline
       summary: 날짜별 다이어리 조회
       description: 특정일(KST) 영상을 테마별 섹션으로 반환. `diary_videos` + Read Model(캡션·썸네일) enrichment.
-        테마 전체 목록은 `GET /api/diaries/themes` 별도 호출.
+        테마 전체 목록은 `GET /api/v1/diaries/themes` 별도 호출.
       operationId: getDateTimeline
       parameters:
       - name: X-User-Uuid
@@ -255,7 +255,7 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/DateTimelineResponse"
-  /api/diaries/calendar:
+  /api/v1/diaries/calendar:
     get:
       tags:
       - Calendar
@@ -288,7 +288,7 @@ paths:
             '*/*':
               schema:
                 $ref: "#/components/schemas/CalendarResponse"
-  /api/diaries/videos/{diaryVideoId}:
+  /api/v1/diaries/videos/{diaryVideoId}:
     delete:
       tags:
       - Diary Video

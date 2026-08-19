@@ -20,7 +20,7 @@ import java.util.UUID;
 
 @Tag(name = "Diary Video", description = "다이어리 영상 API")
 @RestController
-@RequestMapping("/api/diaries/videos")
+@RequestMapping("/api/v1/diaries/videos")
 @RequiredArgsConstructor
 public class DiaryVideoController {
 

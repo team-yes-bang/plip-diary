@@ -59,7 +59,7 @@ class ThemeControllerTest {
         DiaryTheme deleted = diaryThemePersistenceAdapter.save(DiaryTheme.create(userUuid, "삭제됨", UUID.randomUUID()));
         diaryThemePersistenceAdapter.softDelete(deleted.getId());
 
-        mockMvc.perform(get("/api/diaries/themes")
+        mockMvc.perform(get("/api/v1/diaries/themes")
                         .header(ThemeController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.themes.length()").value(2))
@@ -69,7 +69,7 @@ class ThemeControllerTest {
 
     @Test
     void listThemes_empty_returnsEmptyList() throws Exception {
-        mockMvc.perform(get("/api/diaries/themes")
+        mockMvc.perform(get("/api/v1/diaries/themes")
                         .header(ThemeController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.themes.length()").value(0));
@@ -79,7 +79,7 @@ class ThemeControllerTest {
     void getTheme_returnsTheme() throws Exception {
         DiaryTheme saved = diaryThemePersistenceAdapter.save(DiaryTheme.create(userUuid, "일상", UUID.randomUUID()));
 
-        mockMvc.perform(get("/api/diaries/themes/{id}", saved.getId())
+        mockMvc.perform(get("/api/v1/diaries/themes/{id}", saved.getId())
                         .header(ThemeController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(saved.getId()))
@@ -90,7 +90,7 @@ class ThemeControllerTest {
     void getTheme_otherUser_returnsNotFound() throws Exception {
         DiaryTheme saved = diaryThemePersistenceAdapter.save(DiaryTheme.create(UUID.randomUUID(), "일상", UUID.randomUUID()));
 
-        mockMvc.perform(get("/api/diaries/themes/{id}", saved.getId())
+        mockMvc.perform(get("/api/v1/diaries/themes/{id}", saved.getId())
                         .header(ThemeController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("THEME_001"));
@@ -100,7 +100,7 @@ class ThemeControllerTest {
     void createTheme_returnsCreated() throws Exception {
         var request = new CreateThemeRequest("여행");
 
-        mockMvc.perform(post("/api/diaries/themes")
+        mockMvc.perform(post("/api/v1/diaries/themes")
                         .header(ThemeController.USER_UUID_HEADER, userUuid)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -118,7 +118,7 @@ class ThemeControllerTest {
 
         var request = new CreateThemeRequest("초과");
 
-        mockMvc.perform(post("/api/diaries/themes")
+        mockMvc.perform(post("/api/v1/diaries/themes")
                         .header(ThemeController.USER_UUID_HEADER, userUuid)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -132,7 +132,7 @@ class ThemeControllerTest {
         diaryThemePersistenceAdapter.save(DiaryTheme.create(userUuid, "여행", UUID.randomUUID()));
         var request = new CreateThemeRequest("여행");
 
-        mockMvc.perform(post("/api/diaries/themes")
+        mockMvc.perform(post("/api/v1/diaries/themes")
                         .header(ThemeController.USER_UUID_HEADER, userUuid)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -147,7 +147,7 @@ class ThemeControllerTest {
         diaryThemePersistenceAdapter.softDelete(deleted.getId());
         var request = new CreateThemeRequest("여행");
 
-        mockMvc.perform(post("/api/diaries/themes")
+        mockMvc.perform(post("/api/v1/diaries/themes")
                         .header(ThemeController.USER_UUID_HEADER, userUuid)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -161,7 +161,7 @@ class ThemeControllerTest {
         DiaryTheme saved = diaryThemePersistenceAdapter.save(DiaryTheme.create(userUuid, "여행", UUID.randomUUID()));
         var request = new UpdateThemeRequest("일상");
 
-        mockMvc.perform(patch("/api/diaries/themes/{id}", saved.getId())
+        mockMvc.perform(patch("/api/v1/diaries/themes/{id}", saved.getId())
                         .header(ThemeController.USER_UUID_HEADER, userUuid)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -171,7 +171,7 @@ class ThemeControllerTest {
 
     @Test
     void createTheme_blankName_returnsBadRequest() throws Exception {
-        mockMvc.perform(post("/api/diaries/themes")
+        mockMvc.perform(post("/api/v1/diaries/themes")
                         .header(ThemeController.USER_UUID_HEADER, userUuid)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"\"}"))
@@ -184,7 +184,7 @@ class ThemeControllerTest {
         DiaryTheme saved = diaryThemePersistenceAdapter.save(DiaryTheme.create(userUuid, "일상", UUID.randomUUID()));
         var request = new UpdateThemeRequest("여행");
 
-        mockMvc.perform(patch("/api/diaries/themes/{id}", saved.getId())
+        mockMvc.perform(patch("/api/v1/diaries/themes/{id}", saved.getId())
                         .header(ThemeController.USER_UUID_HEADER, userUuid)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -197,7 +197,7 @@ class ThemeControllerTest {
         DiaryTheme saved = diaryThemePersistenceAdapter.save(DiaryTheme.create(UUID.randomUUID(), "일상", UUID.randomUUID()));
         var request = new UpdateThemeRequest("여행");
 
-        mockMvc.perform(patch("/api/diaries/themes/{id}", saved.getId())
+        mockMvc.perform(patch("/api/v1/diaries/themes/{id}", saved.getId())
                         .header(ThemeController.USER_UUID_HEADER, userUuid)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -209,7 +209,7 @@ class ThemeControllerTest {
     void deleteTheme_lastRemaining_returnsConflict() throws Exception {
         DiaryTheme theme = diaryThemePersistenceAdapter.save(DiaryTheme.create(userUuid, "일상", UUID.randomUUID()));
 
-        mockMvc.perform(delete("/api/diaries/themes/{id}", theme.getId())
+        mockMvc.perform(delete("/api/v1/diaries/themes/{id}", theme.getId())
                         .header(ThemeController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("THEME_003"))
@@ -224,19 +224,19 @@ class ThemeControllerTest {
                 DiaryVideo.create(theme1.getId(), UUID.randomUUID())
         );
 
-        mockMvc.perform(delete("/api/diaries/themes/{id}", theme1.getId())
+        mockMvc.perform(delete("/api/v1/diaries/themes/{id}", theme1.getId())
                         .header(ThemeController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isNoContent());
 
         assertThat(diaryThemePersistenceAdapter.findById(theme1.getId())).isEmpty();
         assertThat(diaryVideoPersistenceAdapter.findById(video.getId())).isEmpty();
 
-        mockMvc.perform(get("/api/diaries/themes/{id}", theme1.getId())
+        mockMvc.perform(get("/api/v1/diaries/themes/{id}", theme1.getId())
                         .header(ThemeController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("THEME_001"));
 
-        mockMvc.perform(get("/api/diaries/themes")
+        mockMvc.perform(get("/api/v1/diaries/themes")
                         .header(ThemeController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.themes.length()").value(1))
