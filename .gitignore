@@ -41,6 +41,8 @@ out/
 
 ### Local secrets ###
 .env
+docker-compose.local.yml
+docker/local/mysql/init-databases.sql
 
 ### Application resources (로컬·환경별 설정) ###
 src/main/resources/
