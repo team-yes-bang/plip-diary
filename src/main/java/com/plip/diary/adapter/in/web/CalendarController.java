@@ -2,7 +2,10 @@ package com.plip.diary.adapter.in.web;
 
 import com.plip.diary.adapter.in.web.dto.CalendarResponse;
 import com.plip.diary.application.port.in.GetCalendarUseCase;
+import com.plip.diary.global.config.SwaggerConfig;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @Tag(name = "Calendar", description = "캘린더 API")
+@SecurityRequirement(name = SwaggerConfig.BEARER_AUTH_SCHEME)
 @RestController
 @RequestMapping("/api/v1/diaries/calendar")
 @RequiredArgsConstructor
@@ -29,7 +33,7 @@ public class CalendarController {
     )
     @GetMapping
     public CalendarResponse getCalendar(
-            @RequestHeader(USER_UUID_HEADER) UUID userUuid,
+            @Parameter(hidden = true) @RequestHeader(USER_UUID_HEADER) UUID userUuid,
             @RequestParam int year,
             @RequestParam int month
     ) {

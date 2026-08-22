@@ -2,8 +2,11 @@ package com.plip.diary.adapter.in.web;
 
 import com.plip.diary.adapter.in.web.dto.HomeFeedResponse;
 import com.plip.diary.application.port.in.GetHomeFeedUseCase;
+import com.plip.diary.global.config.SwaggerConfig;
 import com.plip.diary.global.web.RequestHeaders;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @Tag(name = "Home", description = "홈 피드 API")
+@SecurityRequirement(name = SwaggerConfig.BEARER_AUTH_SCHEME)
 @RestController
 @RequiredArgsConstructor
 public class HomeFeedController {
@@ -29,7 +33,7 @@ public class HomeFeedController {
     )
     @GetMapping("/api/v1/diaries/home")
     public HomeFeedResponse getHomeFeed(
-            @RequestHeader(USER_UUID_HEADER) UUID userUuid
+            @Parameter(hidden = true) @RequestHeader(USER_UUID_HEADER) UUID userUuid
     ) {
         return HomeFeedResponse.from(getHomeFeedUseCase.getHomeFeed(userUuid));
     }

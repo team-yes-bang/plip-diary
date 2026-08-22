@@ -28,6 +28,9 @@ app:
   kafka:
     topics:
       user-registered: user.registered
+      diary-video-uploaded: diary.video.uploaded
+      diary-video-linked: diary.video.linked
+      diary-video-unlinked: diary.video.unlinked
 
 eureka:
   instance:

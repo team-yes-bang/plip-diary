@@ -4,8 +4,11 @@ import com.plip.diary.adapter.in.web.dto.DateTimelineResponse;
 import com.plip.diary.adapter.in.web.dto.ThemeTimelineResponse;
 import com.plip.diary.application.port.in.GetDateTimelineUseCase;
 import com.plip.diary.application.port.in.GetThemeTimelineUseCase;
+import com.plip.diary.global.config.SwaggerConfig;
 import com.plip.diary.global.web.RequestHeaders;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -18,6 +21,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Tag(name = "Timeline", description = "다이어리 타임라인 API")
+@SecurityRequirement(name = SwaggerConfig.BEARER_AUTH_SCHEME)
 @RestController
 @RequiredArgsConstructor
 public class DateTimelineController {
@@ -34,7 +38,7 @@ public class DateTimelineController {
     )
     @GetMapping("/api/v1/diaries/dates/{date}")
     public DateTimelineResponse getDateTimeline(
-            @RequestHeader(USER_UUID_HEADER) UUID userUuid,
+            @Parameter(hidden = true) @RequestHeader(USER_UUID_HEADER) UUID userUuid,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         return DateTimelineResponse.from(getDateTimelineUseCase.getDateTimeline(userUuid, date));
@@ -47,7 +51,7 @@ public class DateTimelineController {
     )
     @GetMapping("/api/v1/diaries/themes/{id}/timeline")
     public ThemeTimelineResponse getThemeTimeline(
-            @RequestHeader(USER_UUID_HEADER) UUID userUuid,
+            @Parameter(hidden = true) @RequestHeader(USER_UUID_HEADER) UUID userUuid,
             @PathVariable Long id
     ) {
         return ThemeTimelineResponse.from(getThemeTimelineUseCase.getThemeTimeline(userUuid, id));
