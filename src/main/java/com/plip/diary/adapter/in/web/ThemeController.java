@@ -9,8 +9,11 @@ import com.plip.diary.application.port.in.DeleteThemeUseCase;
 import com.plip.diary.application.port.in.GetThemeUseCase;
 import com.plip.diary.application.port.in.ListThemesUseCase;
 import com.plip.diary.application.port.in.UpdateThemeUseCase;
+import com.plip.diary.global.config.SwaggerConfig;
 import com.plip.diary.global.web.RequestHeaders;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @Tag(name = "Theme", description = "다이어리 테마 API")
+@SecurityRequirement(name = SwaggerConfig.BEARER_AUTH_SCHEME)
 @RestController
 @RequestMapping("/api/v1/diaries/themes")
 @RequiredArgsConstructor
@@ -44,7 +48,9 @@ public class ThemeController {
 
     @Operation(summary = "테마 목록 조회", description = "사용자의 활성 테마 목록 반환")
     @GetMapping
-    public ThemeListResponse listThemes(@RequestHeader(USER_UUID_HEADER) UUID userUuid) {
+    public ThemeListResponse listThemes(
+            @Parameter(hidden = true) @RequestHeader(USER_UUID_HEADER) UUID userUuid
+    ) {
         return ThemeListResponse.from(listThemesUseCase.listThemes(userUuid));
     }
 
@@ -55,7 +61,7 @@ public class ThemeController {
     )
     @GetMapping("/{id}")
     public ThemeResponse getTheme(
-            @RequestHeader(USER_UUID_HEADER) UUID userUuid,
+            @Parameter(hidden = true) @RequestHeader(USER_UUID_HEADER) UUID userUuid,
             @PathVariable Long id
     ) {
         return ThemeResponse.from(getThemeUseCase.getTheme(userUuid, id));
@@ -64,7 +70,7 @@ public class ThemeController {
     @Operation(summary = "테마 생성", description = "활성 테마는 사용자당 최대 5개까지 생성 가능")
     @PostMapping
     public ResponseEntity<ThemeResponse> createTheme(
-            @RequestHeader(USER_UUID_HEADER) UUID userUuid,
+            @Parameter(hidden = true) @RequestHeader(USER_UUID_HEADER) UUID userUuid,
             @Valid @RequestBody CreateThemeRequest request
     ) {
         var theme = createThemeUseCase.createTheme(userUuid, request.name());
@@ -74,7 +80,7 @@ public class ThemeController {
     @Operation(summary = "테마 이름 수정")
     @PatchMapping("/{id}")
     public ThemeResponse updateTheme(
-            @RequestHeader(USER_UUID_HEADER) UUID userUuid,
+            @Parameter(hidden = true) @RequestHeader(USER_UUID_HEADER) UUID userUuid,
             @PathVariable Long id,
             @Valid @RequestBody UpdateThemeRequest request
     ) {
@@ -85,7 +91,7 @@ public class ThemeController {
     @Operation(summary = "테마 삭제", description = "테마와 연관 영상을 Soft Delete 처리")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTheme(
-            @RequestHeader(USER_UUID_HEADER) UUID userUuid,
+            @Parameter(hidden = true) @RequestHeader(USER_UUID_HEADER) UUID userUuid,
             @PathVariable Long id
     ) {
         deleteThemeUseCase.deleteTheme(userUuid, id);

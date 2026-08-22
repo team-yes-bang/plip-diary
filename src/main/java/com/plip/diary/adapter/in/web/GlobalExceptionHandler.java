@@ -5,6 +5,7 @@ import com.plip.diary.global.exception.BusinessException;
 import com.plip.diary.global.exception.ErrorCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -35,6 +36,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         return ResponseEntity.status(ErrorCode.INVALID_INPUT.getHttpStatus())
                 .body(ErrorResponse.from(ErrorCode.INVALID_INPUT));
+    }
+
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ErrorResponse> handleMissingRequestHeader(MissingRequestHeaderException ex) {
+        return ResponseEntity.status(ErrorCode.UNAUTHORIZED.getHttpStatus())
+                .body(ErrorResponse.from(ErrorCode.UNAUTHORIZED));
     }
 
     @ExceptionHandler(Exception.class)

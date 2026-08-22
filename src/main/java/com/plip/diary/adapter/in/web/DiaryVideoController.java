@@ -3,7 +3,10 @@ package com.plip.diary.adapter.in.web;
 import com.plip.diary.adapter.in.web.dto.TransferDiaryVideoToTopicRequest;
 import com.plip.diary.application.port.in.TransferDiaryVideoToTopicUseCase;
 import com.plip.diary.application.port.in.UnbindDiaryVideoUseCase;
+import com.plip.diary.global.config.SwaggerConfig;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
 @Tag(name = "Diary Video", description = "다이어리 영상 API")
+@SecurityRequirement(name = SwaggerConfig.BEARER_AUTH_SCHEME)
 @RestController
 @RequestMapping("/api/v1/diaries/videos")
 @RequiredArgsConstructor
@@ -36,7 +40,7 @@ public class DiaryVideoController {
     )
     @PostMapping("/{diaryVideoId}/topic-transfer")
     public ResponseEntity<Void> transferDiaryVideoToTopic(
-            @RequestHeader(USER_UUID_HEADER) UUID userUuid,
+            @Parameter(hidden = true) @RequestHeader(USER_UUID_HEADER) UUID userUuid,
             @PathVariable Long diaryVideoId,
             @Valid @RequestBody TransferDiaryVideoToTopicRequest request
     ) {
@@ -50,7 +54,7 @@ public class DiaryVideoController {
     )
     @DeleteMapping("/{diaryVideoId}")
     public ResponseEntity<Void> unbindDiaryVideo(
-            @RequestHeader(USER_UUID_HEADER) UUID userUuid,
+            @Parameter(hidden = true) @RequestHeader(USER_UUID_HEADER) UUID userUuid,
             @PathVariable Long diaryVideoId
     ) {
         unbindDiaryVideoUseCase.unbindDiaryVideo(userUuid, diaryVideoId);
