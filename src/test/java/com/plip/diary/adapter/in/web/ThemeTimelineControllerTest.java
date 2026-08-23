@@ -96,6 +96,8 @@ class ThemeTimelineControllerTest {
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(2))
+                .andExpect(jsonPath("$.hasMore").value(false))
+                .andExpect(jsonPath("$.nextCursor").doesNotExist())
                 .andExpect(jsonPath("$.sections[0].date").value("2026-08-02"))
                 .andExpect(jsonPath("$.sections[0].videos[0].caption").value("8/2 캡션"))
                 .andExpect(jsonPath("$.sections[1].date").value("2026-08-01"))

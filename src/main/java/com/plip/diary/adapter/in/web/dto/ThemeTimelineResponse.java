@@ -1,8 +1,9 @@
 package com.plip.diary.adapter.in.web.dto;
 
-import com.plip.diary.application.port.in.dto.ThemeTimeline;
+import com.plip.diary.application.port.in.dto.ThemeTimelinePage;
 import com.plip.diary.application.port.in.dto.ThemeTimelineSection;
 import com.plip.diary.application.port.in.dto.ThemeTimelineVideo;
+import com.plip.diary.global.pagination.TimelineCursor;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
@@ -14,13 +15,24 @@ import java.util.UUID;
 public record ThemeTimelineResponse(
 
         @Schema(description = "날짜별 영상 섹션 (영상이 있는 날짜만, 최신 날짜 우선)")
-        List<ThemeTimelineSectionResponse> sections
+        List<ThemeTimelineSectionResponse> sections,
+
+        @Schema(
+                description = TimelineCursor.OPENAPI_DESCRIPTION + " hasMore=false이면 null.",
+                example = TimelineCursor.OPENAPI_EXAMPLE
+        )
+        String nextCursor,
+
+        @Schema(description = "다음 페이지 존재 여부")
+        boolean hasMore
 ) {
-    public static ThemeTimelineResponse from(ThemeTimeline timeline) {
+    public static ThemeTimelineResponse from(ThemeTimelinePage timeline) {
         return new ThemeTimelineResponse(
                 timeline.sections().stream()
                         .map(ThemeTimelineSectionResponse::from)
-                        .toList()
+                        .toList(),
+                timeline.nextCursor(),
+                timeline.hasMore()
         );
     }
 }
