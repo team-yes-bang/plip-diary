@@ -1,6 +1,7 @@
 package com.plip.diary.application.port.out;
 
 import com.plip.diary.domain.model.DiaryVideo;
+import com.plip.diary.global.pagination.TimelineCursor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -33,4 +34,11 @@ public interface DiaryVideoPersistencePort {
     List<DiaryVideo> findByUserUuidAndCreatedAtRange(UUID userUuid, LocalDateTime start, LocalDateTime end);
 
     List<DiaryVideo> findByThemeIdAndUserUuid(Long themeId, UUID userUuid);
+
+    List<DiaryVideo> findByThemeIdAndUserUuidWithCursor(
+            Long themeId,
+            UUID userUuid,
+            TimelineCursor.Decoded cursor,
+            int limit
+    );
 }

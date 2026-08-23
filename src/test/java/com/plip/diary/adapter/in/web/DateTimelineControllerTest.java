@@ -159,6 +159,19 @@ class DateTimelineControllerTest {
     }
 
     @Test
+    void getDateTimeline_withWindow_returnsFocusDateAndDays() throws Exception {
+        mockMvc.perform(get("/api/v1/diaries/dates/2026-08-02")
+                        .param("window", "1")
+                        .header(DateTimelineController.USER_UUID_HEADER, userUuid))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.focusDate").value("2026-08-02"))
+                .andExpect(jsonPath("$.days.length()").value(3))
+                .andExpect(jsonPath("$.days[0].date").value("2026-08-01"))
+                .andExpect(jsonPath("$.days[1].date").value("2026-08-02"))
+                .andExpect(jsonPath("$.days[2].date").value("2026-08-03"));
+    }
+
+    @Test
     void getDateTimeline_invalidDate_returnsBadRequest() throws Exception {
         mockMvc.perform(get("/api/v1/diaries/dates/2026-13-40")
                         .header(DateTimelineController.USER_UUID_HEADER, userUuid))

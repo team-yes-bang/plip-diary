@@ -1,5 +1,6 @@
 package com.plip.diary.adapter.out.persistence.video;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -88,5 +89,27 @@ interface DiaryVideoSpringDataRepository extends JpaRepository<DiaryVideoJpaEnti
     List<DiaryVideoJpaEntity> findByThemeIdAndUserUuid(
             @Param("themeId") Long themeId,
             @Param("userUuid") UUID userUuid
+    );
+
+    @Query("""
+            SELECT v FROM DiaryVideoJpaEntity v, DiaryThemeJpaEntity t
+            WHERE v.themeId = :themeId
+            AND v.themeId = t.id
+            AND t.userUuid = :userUuid
+            AND v.deletedAt IS NULL
+            AND t.deletedAt IS NULL
+            AND (
+                :cursorCreatedAt IS NULL
+                OR v.createdAt < :cursorCreatedAt
+                OR (v.createdAt = :cursorCreatedAt AND v.id < :cursorId)
+            )
+            ORDER BY v.createdAt DESC, v.id DESC
+            """)
+    List<DiaryVideoJpaEntity> findByThemeIdAndUserUuidWithCursor(
+            @Param("themeId") Long themeId,
+            @Param("userUuid") UUID userUuid,
+            @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
+            @Param("cursorId") Long cursorId,
+            Pageable pageable
     );
 }

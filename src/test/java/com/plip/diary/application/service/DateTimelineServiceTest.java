@@ -1,6 +1,7 @@
 package com.plip.diary.application.service;
 
 import com.plip.diary.application.port.in.dto.DateTimeline;
+import com.plip.diary.application.port.in.dto.DateWindowTimeline;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.VideoMetadata;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -96,5 +98,30 @@ class DateTimelineServiceTest {
         assertThat(result.sections().get(0).videos().get(0).thumbnailUrl()).isEqualTo("https://cdn/thumb.jpg");
 
         verify(videoMetadataEnrichmentPort).fetchVideoMetadata(userUuid, List.of(videoUuid));
+    }
+
+    @Test
+    void getDateWindowTimeline_returnsThreeDaysIncludingEmptyDay() {
+        UUID userUuid = UUID.randomUUID();
+        LocalDate focusDate = LocalDate.of(2026, 8, 2);
+
+        when(diaryVideoPersistencePort.findByUserUuidAndCreatedAtRange(eq(userUuid), any(), any()))
+                .thenReturn(List.of());
+        when(diaryThemePersistencePort.findAllByUserUuid(userUuid)).thenReturn(List.of());
+
+        DateWindowTimeline result = dateTimelineService.getDateWindowTimeline(userUuid, focusDate, 1);
+
+        assertThat(result.focusDate()).isEqualTo(focusDate);
+        assertThat(result.days()).hasSize(3);
+        assertThat(result.days().get(0).date()).isEqualTo(LocalDate.of(2026, 8, 1));
+        assertThat(result.days().get(1).date()).isEqualTo(LocalDate.of(2026, 8, 2));
+        assertThat(result.days().get(2).date()).isEqualTo(LocalDate.of(2026, 8, 3));
+        assertThat(result.days().get(0).sections()).isEmpty();
+    }
+
+    @Test
+    void getDateWindowTimeline_rejectsNonPositiveWindow() {
+        assertThatThrownBy(() -> dateTimelineService.getDateWindowTimeline(UUID.randomUUID(), LocalDate.now(), 0))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

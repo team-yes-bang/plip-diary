@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.plip.diary.global.pagination.TimelineCursor;
 import com.plip.diary.global.time.KstDateTimes;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -97,6 +99,28 @@ public class DiaryVideoPersistenceAdapter implements DiaryVideoPersistencePort {
     @Override
     public List<DiaryVideo> findByThemeIdAndUserUuid(Long themeId, UUID userUuid) {
         return diaryVideoSpringDataRepository.findByThemeIdAndUserUuid(themeId, userUuid)
+                .stream()
+                .map(diaryVideoMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<DiaryVideo> findByThemeIdAndUserUuidWithCursor(
+            Long themeId,
+            UUID userUuid,
+            TimelineCursor.Decoded cursor,
+            int limit
+    ) {
+        LocalDateTime cursorCreatedAt = cursor != null ? cursor.createdAt() : null;
+        Long cursorId = cursor != null ? cursor.id() : null;
+
+        return diaryVideoSpringDataRepository.findByThemeIdAndUserUuidWithCursor(
+                        themeId,
+                        userUuid,
+                        cursorCreatedAt,
+                        cursorId,
+                        PageRequest.of(0, limit)
+                )
                 .stream()
                 .map(diaryVideoMapper::toDomain)
                 .toList();
