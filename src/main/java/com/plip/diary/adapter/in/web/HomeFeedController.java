@@ -27,9 +27,10 @@ public class HomeFeedController {
 
     @Operation(
             summary = "홈 피드 조회",
-            description = "KST 오늘(0건이어도 포함) + 영상이 있는 최신 2일, 일자별 최대 4건. "
+            description = "KST 오늘(0건이어도 포함) + 영상이 있는 최신 2일, 일자별 최대 3건. "
                     + "`diary_videos` + Read Model(캡션·썸네일) enrichment. "
-                    + "테마 전체 목록은 `GET /api/v1/diaries/themes` 별도 호출. 특정일 전체는 `GET /api/v1/diaries/dates/{date}`."
+                    + "활성 테마 목록은 응답 `themes`에 포함. 테마 CRUD·기타 화면은 `GET /api/v1/diaries/themes` 사용. "
+                    + "특정일 전체는 `GET /api/v1/diaries/dates/{date}`."
     )
     @GetMapping("/api/v1/diaries/home")
     public HomeFeedResponse getHomeFeed(

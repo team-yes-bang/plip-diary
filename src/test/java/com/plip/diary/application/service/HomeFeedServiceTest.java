@@ -49,12 +49,14 @@ class HomeFeedServiceTest {
 
         when(diaryVideoPersistencePort.findByUserUuidAndCreatedAtRange(eq(userUuid), any(), any()))
                 .thenReturn(List.of());
+        when(diaryThemePersistencePort.findAllByUserUuid(userUuid)).thenReturn(List.of());
 
         HomeFeed result = homeFeedService.getHomeFeed(userUuid);
 
         assertThat(result.sections()).hasSize(1);
         assertThat(result.sections().get(0).date()).isEqualTo(KstDateTimes.today());
         assertThat(result.sections().get(0).videos()).isEmpty();
+        assertThat(result.themes()).isEmpty();
         verifyNoInteractions(videoMetadataEnrichmentPort);
     }
 
@@ -84,6 +86,7 @@ class HomeFeedServiceTest {
         assertThat(result.sections().get(0).videos()).isEmpty();
         assertThat(result.sections().get(1).date()).isEqualTo(today.minusDays(1));
         assertThat(result.sections().get(2).date()).isEqualTo(today.minusDays(2));
+        assertThat(result.themes()).containsExactly(theme);
     }
 
     @Test
@@ -116,7 +119,7 @@ class HomeFeedServiceTest {
     }
 
     @Test
-    void getHomeFeed_limitsVideosPerSectionToFour() {
+    void getHomeFeed_limitsVideosPerSectionToThree() {
         UUID userUuid = UUID.randomUUID();
         LocalDate today = KstDateTimes.today();
         DiaryTheme theme = theme(userUuid, 1L, "일상");
@@ -138,7 +141,8 @@ class HomeFeedServiceTest {
         HomeFeed result = homeFeedService.getHomeFeed(userUuid);
 
         assertThat(result.sections()).hasSize(1);
-        assertThat(result.sections().get(0).videos()).hasSize(4);
+        assertThat(result.sections().get(0).videos()).hasSize(3);
+        assertThat(result.themes()).containsExactly(theme);
     }
 
     @Test

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 public class HomeFeedService implements GetHomeFeedUseCase {
 
     static final int SECTION_COUNT = 3;
-    static final int MAX_VIDEOS_PER_SECTION = 4;
+    static final int MAX_VIDEOS_PER_SECTION = 3;
     private static final int LOOKBACK_DAYS = 365;
 
     private final DiaryVideoPersistencePort diaryVideoPersistencePort;
@@ -55,16 +55,17 @@ public class HomeFeedService implements GetHomeFeedUseCase {
                 .limit(SECTION_COUNT - 1L)
                 .forEach(sectionDates::add);
 
+        List<DiaryTheme> themes = diaryThemePersistencePort.findAllByUserUuid(userUuid);
+        Map<Long, DiaryTheme> themeById = themes.stream()
+                .collect(Collectors.toMap(DiaryTheme::getId, Function.identity()));
+
         if (sectionDates.size() == 1 && videosByDate.getOrDefault(today, List.of()).isEmpty()) {
-            return new HomeFeed(List.of(new HomeFeedSection(today, List.of())));
+            return new HomeFeed(List.of(new HomeFeedSection(today, List.of())), themes);
         }
 
         List<DiaryVideo> selectedVideos = sectionDates.stream()
                 .flatMap(date -> videosByDate.getOrDefault(date, List.of()).stream())
                 .toList();
-
-        Map<Long, DiaryTheme> themeById = diaryThemePersistencePort.findAllByUserUuid(userUuid).stream()
-                .collect(Collectors.toMap(DiaryTheme::getId, Function.identity()));
 
         List<UUID> videoUuids = selectedVideos.stream()
                 .map(DiaryVideo::getVideoUuid)
@@ -82,7 +83,7 @@ public class HomeFeedService implements GetHomeFeedUseCase {
                 ))
                 .toList();
 
-        return new HomeFeed(sections);
+        return new HomeFeed(sections, themes);
     }
 
     private HomeFeedSection toSection(
