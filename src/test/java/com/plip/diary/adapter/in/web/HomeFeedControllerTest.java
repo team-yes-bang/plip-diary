@@ -101,7 +101,9 @@ class HomeFeedControllerTest {
                 .andExpect(jsonPath("$.sections[1].date").value(KstDateTimes.today().minusDays(1).toString()))
                 .andExpect(jsonPath("$.sections[1].videos[0].caption").value("어제"))
                 .andExpect(jsonPath("$.sections[2].date").value(KstDateTimes.today().minusDays(2).toString()))
-                .andExpect(jsonPath("$.sections[2].videos[0].thumbnailUrl").value("https://cdn/t.jpg"));
+                .andExpect(jsonPath("$.sections[2].videos[0].thumbnailUrl").value("https://cdn/t.jpg"))
+                .andExpect(jsonPath("$.themes.length()").value(1))
+                .andExpect(jsonPath("$.themes[0].name").value("일상"));
     }
 
     @Test
@@ -111,7 +113,8 @@ class HomeFeedControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(1))
                 .andExpect(jsonPath("$.sections[0].date").value(KstDateTimes.today().toString()))
-                .andExpect(jsonPath("$.sections[0].videos.length()").value(0));
+                .andExpect(jsonPath("$.sections[0].videos.length()").value(0))
+                .andExpect(jsonPath("$.themes.length()").value(0));
     }
 
     @Test
@@ -143,7 +146,7 @@ class HomeFeedControllerTest {
                         .header(HomeFeedController.USER_UUID_HEADER, userUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sections.length()").value(2))
-                .andExpect(jsonPath("$.sections[0].videos.length()").value(4))
+                .andExpect(jsonPath("$.sections[0].videos.length()").value(3))
                 .andExpect(jsonPath("$.sections[1].date").value(KstDateTimes.today().minusDays(2).toString()));
     }
 

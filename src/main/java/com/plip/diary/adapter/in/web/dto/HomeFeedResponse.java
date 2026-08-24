@@ -14,12 +14,18 @@ import java.util.UUID;
 public record HomeFeedResponse(
 
         @Schema(description = "날짜별 영상 섹션 (오늘 KST 필수 포함, 최대 3일, 최신 날짜 우선)")
-        List<HomeFeedSectionResponse> sections
+        List<HomeFeedSectionResponse> sections,
+
+        @Schema(description = "활성 테마 목록 (GET /themes 와 동일 스키마)")
+        List<ThemeResponse> themes
 ) {
     public static HomeFeedResponse from(HomeFeed feed) {
         return new HomeFeedResponse(
                 feed.sections().stream()
                         .map(HomeFeedSectionResponse::from)
+                        .toList(),
+                feed.themes().stream()
+                        .map(ThemeResponse::from)
                         .toList()
         );
     }
@@ -31,7 +37,7 @@ record HomeFeedSectionResponse(
         @Schema(description = "작성일 (KST, ISO-8601 date)", example = "2026-08-15")
         LocalDate date,
 
-        @Schema(description = "해당 날짜의 영상 목록 (최대 4건, 최신순)")
+        @Schema(description = "해당 날짜의 영상 목록 (최대 3건, 최신순)")
         List<HomeFeedVideoResponse> videos
 ) {
     static HomeFeedSectionResponse from(HomeFeedSection section) {
