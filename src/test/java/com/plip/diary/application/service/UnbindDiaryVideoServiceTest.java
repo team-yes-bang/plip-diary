@@ -1,5 +1,6 @@
 package com.plip.diary.application.service;
 
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.VideoUnlinkedEventPort;
 import com.plip.diary.domain.model.DiaryVideo;
@@ -31,6 +32,9 @@ class UnbindDiaryVideoServiceTest {
     @Mock
     private VideoMetadataSyncService videoMetadataSyncService;
 
+    @Mock
+    private DiaryTimelineCachePort diaryTimelineCachePort;
+
     @InjectMocks
     private UnbindDiaryVideoService unbindDiaryVideoService;
 
@@ -57,6 +61,7 @@ class UnbindDiaryVideoServiceTest {
 
             verify(videoUnlinkedEventPort).publish(videoUuid);
             verify(videoMetadataSyncService).remove(userUuid, videoUuid);
+            verify(diaryTimelineCachePort).evictByUserUuid(userUuid);
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
         }

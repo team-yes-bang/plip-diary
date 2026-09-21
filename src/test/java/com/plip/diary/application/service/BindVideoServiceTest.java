@@ -1,6 +1,7 @@
 package com.plip.diary.application.service;
 
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.VideoLinkedEventPort;
 import com.plip.diary.domain.model.DiaryTheme;
@@ -35,6 +36,9 @@ class BindVideoServiceTest {
     @Mock
     private VideoLinkedEventPort videoLinkedEventPort;
 
+    @Mock
+    private DiaryTimelineCachePort diaryTimelineCachePort;
+
     @InjectMocks
     private BindVideoService bindVideoService;
 
@@ -63,6 +67,7 @@ class BindVideoServiceTest {
             TransactionSynchronizationManager.getSynchronizations()
                     .forEach(sync -> sync.afterCommit());
             verify(videoLinkedEventPort).publish(videoUuid);
+            verify(diaryTimelineCachePort).evictByUserUuid(userUuid);
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
         }

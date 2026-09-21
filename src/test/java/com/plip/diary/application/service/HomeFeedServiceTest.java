@@ -1,13 +1,16 @@
 package com.plip.diary.application.service;
 
 import com.plip.diary.application.port.in.dto.HomeFeed;
+import com.plip.diary.application.port.in.dto.HomeFeedSection;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.VideoMetadata;
 import com.plip.diary.application.port.out.VideoServicePort;
 import com.plip.diary.domain.model.DiaryTheme;
 import com.plip.diary.domain.model.DiaryVideo;
 import com.plip.diary.global.time.KstDateTimes;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,11 +22,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -40,8 +46,16 @@ class HomeFeedServiceTest {
     @Mock
     private VideoServicePort videoMetadataEnrichmentPort;
 
+    @Mock
+    private DiaryTimelineCachePort diaryTimelineCachePort;
+
     @InjectMocks
     private HomeFeedService homeFeedService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(diaryTimelineCachePort.getHomeFeedSections(any())).thenReturn(Optional.empty());
+    }
 
     @Test
     void getHomeFeed_returnsTodayOnlyWhenNoVideos() {
@@ -176,6 +190,24 @@ class HomeFeedServiceTest {
                 LocalDateTime.of(2026, 1, 1, 0, 0),
                 null
         );
+    }
+
+    @Test
+    void getHomeFeed_returnsCachedSectionsOnHit() {
+        UUID userUuid = UUID.randomUUID();
+        LocalDate today = KstDateTimes.today();
+        DiaryTheme theme = theme(userUuid, 1L, "일상");
+        List<HomeFeedSection> cachedSections = List.of(new HomeFeedSection(today, List.of()));
+
+        when(diaryThemePersistencePort.findAllByUserUuid(userUuid)).thenReturn(List.of(theme));
+        when(diaryTimelineCachePort.getHomeFeedSections(userUuid)).thenReturn(Optional.of(cachedSections));
+
+        HomeFeed result = homeFeedService.getHomeFeed(userUuid);
+
+        assertThat(result.sections()).isEqualTo(cachedSections);
+        assertThat(result.themes()).containsExactly(theme);
+        verifyNoInteractions(videoMetadataEnrichmentPort);
+        verify(diaryVideoPersistencePort, never()).findByUserUuidAndCreatedAtRange(any(), any(), any());
     }
 
     private static DiaryVideo video(Long id, Long themeId, UUID videoUuid, LocalDateTime createdAt) {

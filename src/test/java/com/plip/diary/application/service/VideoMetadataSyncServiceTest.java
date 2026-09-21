@@ -10,9 +10,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,5 +55,31 @@ class VideoMetadataSyncServiceTest {
 
         verify(videoMetadataProjectionPort).deleteByVideoUuid(userUuid, videoUuid);
         verify(videoMetadataCachePort).evict(userUuid, videoUuid);
+    }
+
+    @Test
+    void removeAll_deletesAndEvictsEachVideo() {
+        UUID userUuid = UUID.randomUUID();
+        UUID videoUuid1 = UUID.randomUUID();
+        UUID videoUuid2 = UUID.randomUUID();
+
+        videoMetadataSyncService.removeAll(userUuid, List.of(videoUuid1, videoUuid2));
+
+        verify(videoMetadataProjectionPort).deleteByVideoUuid(userUuid, videoUuid1);
+        verify(videoMetadataProjectionPort).deleteByVideoUuid(userUuid, videoUuid2);
+        verify(videoMetadataCachePort).evict(userUuid, videoUuid1);
+        verify(videoMetadataCachePort).evict(userUuid, videoUuid2);
+    }
+
+    @Test
+    void removeAll_skipsWhenEmpty() {
+        UUID userUuid = UUID.randomUUID();
+
+        videoMetadataSyncService.removeAll(userUuid, List.of());
+
+        verify(videoMetadataProjectionPort, never()).deleteByVideoUuid(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
     }
 }

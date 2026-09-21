@@ -1,6 +1,7 @@
 package com.plip.diary.application.service;
 
 import com.plip.diary.application.port.in.VideoTransferMode;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.VideoUnlinkedEventPort;
 import com.plip.diary.domain.model.DiaryVideo;
@@ -34,6 +35,9 @@ class TransferDiaryVideoToTopicServiceTest {
 
     @Mock
     private VideoMetadataSyncService videoMetadataSyncService;
+
+    @Mock
+    private DiaryTimelineCachePort diaryTimelineCachePort;
 
     @InjectMocks
     private TransferDiaryVideoToTopicService transferDiaryVideoToTopicService;
@@ -76,6 +80,7 @@ class TransferDiaryVideoToTopicServiceTest {
 
             verify(videoUnlinkedEventPort).publish(videoUuid);
             verify(videoMetadataSyncService).remove(userUuid, videoUuid);
+            verify(diaryTimelineCachePort).evictByUserUuid(userUuid);
         } finally {
             TransactionSynchronizationManager.clearSynchronization();
         }

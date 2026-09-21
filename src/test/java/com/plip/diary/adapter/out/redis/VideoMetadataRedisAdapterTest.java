@@ -3,6 +3,7 @@ package com.plip.diary.adapter.out.redis;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.plip.diary.application.port.out.VideoMetadata;
 import com.plip.diary.global.config.VideoMetadataCacheProperties;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,8 +43,10 @@ class VideoMetadataRedisAdapterTest {
         adapter = new VideoMetadataRedisAdapter(
                 stringRedisTemplate,
                 videoMetadataCacheProperties,
-                new VideoMetadataCacheSerde(new ObjectMapper())
+                new VideoMetadataCacheSerde(new ObjectMapper()),
+                new SimpleMeterRegistry()
         );
+        adapter.initMetrics();
     }
 
     @Test
@@ -135,8 +138,10 @@ class VideoMetadataRedisAdapterTest {
         VideoMetadataRedisAdapter ttlAdapter = new VideoMetadataRedisAdapter(
                 stringRedisTemplate,
                 properties,
-                new VideoMetadataCacheSerde(new ObjectMapper())
+                new VideoMetadataCacheSerde(new ObjectMapper()),
+                new SimpleMeterRegistry()
         );
+        ttlAdapter.initMetrics();
 
         assertThat(ttlAdapter.cacheTtl()).isEqualTo(Duration.ofMinutes(30));
     }
