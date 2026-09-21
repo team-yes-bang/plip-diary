@@ -58,6 +58,7 @@ diary-service **소유** MongoDB projection 컬렉션. Phase 5-2 Kafka Consumer�
 | --- | --- | --- |
 | `diary.video.uploaded` (Consumer) | upsert — thumbnail·caption (필수) + 신규 시 `diary_videos` INSERT | [diary.video.uploaded.v1.md](../events/diary.video.uploaded.v1.md) |
 | `DELETE /api/v1/diaries/videos/{diaryVideoId}` (afterCommit) | delete + Redis evict | [diary.video.unlinked.v1.md](../events/diary.video.unlinked.v1.md) |
+| `DELETE /api/v1/diaries/themes/{themeId}` (afterCommit) | theme 소속 videoUuid batch delete + Redis evict | — |
 
 ## 조회 사용 (Phase 5-3)
 
@@ -72,3 +73,4 @@ diary-service **소유** MongoDB projection 컬렉션. Phase 5-2 Kafka Consumer�
 | v1 | Phase 5-1 — 컬렉션·필드·인덱스 정의 |
 | v1.1 | Phase 5-2 — 제품 맥락·동기화 트리거 명시 |
 | v1.2 | `diary.video.uploaded` Consumer·`diary.video.linked`/`unlinked` 전환 |
+| v1.3 | theme delete 시 projection batch remove |

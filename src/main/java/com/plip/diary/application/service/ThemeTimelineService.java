@@ -5,6 +5,7 @@ import com.plip.diary.application.port.in.dto.ThemeTimelinePage;
 import com.plip.diary.application.port.in.dto.ThemeTimelineSection;
 import com.plip.diary.application.port.in.dto.ThemeTimelineVideo;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.VideoMetadata;
 import com.plip.diary.application.port.out.VideoServicePort;
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,7 @@ public class ThemeTimelineService implements GetThemeTimelineUseCase {
     private final DiaryThemePersistencePort diaryThemePersistencePort;
     private final DiaryVideoPersistencePort diaryVideoPersistencePort;
     private final VideoServicePort videoMetadataEnrichmentPort;
+    private final DiaryTimelineCachePort diaryTimelineCachePort;
 
     @Override
     public ThemeTimelinePage getThemeTimeline(UUID userUuid, Long themeId, String cursor, int limit) {
@@ -39,6 +42,13 @@ public class ThemeTimelineService implements GetThemeTimelineUseCase {
                 .orElseThrow(ThemeNotFoundException::new);
 
         int pageSize = normalizeLimit(limit);
+
+        Optional<ThemeTimelinePage> cached = diaryTimelineCachePort.getThemeTimeline(
+                userUuid, themeId, cursor, pageSize);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
+
         TimelineCursor.Decoded decodedCursor = TimelineCursor.decode(cursor);
 
         List<DiaryVideo> fetched = diaryVideoPersistencePort.findByThemeIdAndUserUuidWithCursor(
@@ -52,7 +62,9 @@ public class ThemeTimelineService implements GetThemeTimelineUseCase {
         List<DiaryVideo> pageVideos = hasMore ? fetched.subList(0, pageSize) : fetched;
 
         if (pageVideos.isEmpty()) {
-            return new ThemeTimelinePage(List.of(), null, false);
+            ThemeTimelinePage emptyPage = new ThemeTimelinePage(List.of(), null, false);
+            diaryTimelineCachePort.putThemeTimeline(userUuid, themeId, cursor, pageSize, emptyPage);
+            return emptyPage;
         }
 
         List<UUID> videoUuids = pageVideos.stream()
@@ -75,7 +87,9 @@ public class ThemeTimelineService implements GetThemeTimelineUseCase {
                 ? TimelineCursor.encode(pageVideos.get(pageVideos.size() - 1))
                 : null;
 
-        return new ThemeTimelinePage(sections, nextCursor, hasMore);
+        ThemeTimelinePage result = new ThemeTimelinePage(sections, nextCursor, hasMore);
+        diaryTimelineCachePort.putThemeTimeline(userUuid, themeId, cursor, pageSize, result);
+        return result;
     }
 
     private int normalizeLimit(int limit) {

@@ -2,6 +2,7 @@ package com.plip.diary.adapter.in.web;
 
 import com.plip.diary.adapter.out.persistence.theme.DiaryThemePersistenceAdapter;
 import com.plip.diary.adapter.out.persistence.video.DiaryVideoPersistenceAdapter;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.VideoMetadata;
 import com.plip.diary.application.port.out.VideoServicePort;
 import com.plip.diary.domain.model.DiaryTheme;
@@ -22,6 +23,7 @@ import jakarta.persistence.EntityManager;
 
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -55,11 +57,17 @@ class ThemeTimelineControllerTest {
     @MockitoBean
     private VideoServicePort videoMetadataEnrichmentPort;
 
+    @MockitoBean
+    private DiaryTimelineCachePort diaryTimelineCachePort;
+
     private UUID userUuid;
 
+    @SuppressWarnings("unused")
     @BeforeEach
     void setUp() {
         userUuid = UUID.randomUUID();
+        when(diaryTimelineCachePort.getThemeTimeline(any(), any(), any(), org.mockito.ArgumentMatchers.anyInt()))
+                .thenReturn(Optional.empty());
     }
 
     @Test

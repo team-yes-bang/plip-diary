@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -34,5 +35,14 @@ public class VideoMetadataSyncService {
     public void remove(UUID userUuid, UUID videoUuid) {
         videoMetadataProjectionPort.deleteByVideoUuid(userUuid, videoUuid);
         videoMetadataCachePort.evict(userUuid, videoUuid);
+    }
+
+    public void removeAll(UUID userUuid, List<UUID> videoUuids) {
+        if (videoUuids == null || videoUuids.isEmpty()) {
+            return;
+        }
+        for (UUID videoUuid : videoUuids) {
+            remove(userUuid, videoUuid);
+        }
     }
 }

@@ -11,12 +11,16 @@ import com.plip.diary.application.port.in.GetThemeUseCase;
 import com.plip.diary.application.port.in.ListThemesUseCase;
 import com.plip.diary.application.port.in.UpdateThemeUseCase;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.UuidGeneratorPort;
 import com.plip.diary.domain.model.DiaryTheme;
+import com.plip.diary.domain.model.DiaryVideo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +33,8 @@ public class ThemeService implements CreateThemeUseCase, ListThemesUseCase, GetT
     private final DiaryThemePersistencePort diaryThemePersistencePort;
     private final DiaryVideoPersistencePort diaryVideoPersistencePort;
     private final UuidGeneratorPort uuidGeneratorPort;
+    private final VideoMetadataSyncService videoMetadataSyncService;
+    private final DiaryTimelineCachePort diaryTimelineCachePort;
 
     @Override
     @Transactional(readOnly = true)
@@ -63,7 +69,9 @@ public class ThemeService implements CreateThemeUseCase, ListThemesUseCase, GetT
         if (diaryThemePersistencePort.existsByUserUuidAndNameExcludingId(userUuid, name, id)) {
             throw new ThemeNameDuplicateException();
         }
-        return diaryThemePersistencePort.save(theme.rename(name));
+        DiaryTheme updated = diaryThemePersistencePort.save(theme.rename(name));
+        scheduleTimelineCacheEvictAfterCommit(userUuid);
+        return updated;
     }
 
     @Override
@@ -74,7 +82,32 @@ public class ThemeService implements CreateThemeUseCase, ListThemesUseCase, GetT
         if (diaryThemePersistencePort.countByUserUuid(userUuid) <= 1) {
             throw new ThemeLastRemainingException();
         }
+        List<UUID> videoUuids = diaryVideoPersistencePort.findByThemeIdAndUserUuid(id, userUuid).stream()
+                .map(DiaryVideo::getVideoUuid)
+                .toList();
         diaryVideoPersistencePort.softDeleteAllByThemeId(id);
         diaryThemePersistencePort.softDelete(id);
+        scheduleAfterCommitCleanup(userUuid, videoUuids);
+    }
+
+    private void scheduleAfterCommitCleanup(UUID userUuid, List<UUID> videoUuids) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                if (!videoUuids.isEmpty()) {
+                    videoMetadataSyncService.removeAll(userUuid, videoUuids);
+                }
+                diaryTimelineCachePort.evictByUserUuid(userUuid);
+            }
+        });
+    }
+
+    private void scheduleTimelineCacheEvictAfterCommit(UUID userUuid) {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                diaryTimelineCachePort.evictByUserUuid(userUuid);
+            }
+        });
     }
 }

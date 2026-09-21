@@ -3,11 +3,13 @@ package com.plip.diary.application.service;
 import com.plip.diary.application.port.in.dto.DateTimeline;
 import com.plip.diary.application.port.in.dto.DateWindowTimeline;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.VideoMetadata;
 import com.plip.diary.application.port.out.VideoServicePort;
 import com.plip.diary.domain.model.DiaryTheme;
 import com.plip.diary.domain.model.DiaryVideo;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,13 +20,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,8 +45,16 @@ class DateTimelineServiceTest {
     @Mock
     private VideoServicePort videoMetadataEnrichmentPort;
 
+    @Mock
+    private DiaryTimelineCachePort diaryTimelineCachePort;
+
     @InjectMocks
     private DateTimelineService dateTimelineService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(diaryTimelineCachePort.getDateTimeline(any(), any())).thenReturn(Optional.empty());
+    }
 
     @Test
     void getDateTimeline_returnsEmptySectionsWhenNoVideos() {
@@ -123,5 +137,20 @@ class DateTimelineServiceTest {
     void getDateWindowTimeline_rejectsNonPositiveWindow() {
         assertThatThrownBy(() -> dateTimelineService.getDateWindowTimeline(UUID.randomUUID(), LocalDate.now(), 0))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void getDateTimeline_returnsCachedOnHit() {
+        UUID userUuid = UUID.randomUUID();
+        LocalDate date = LocalDate.of(2026, 8, 1);
+        DateTimeline cached = new DateTimeline(date, List.of());
+
+        when(diaryTimelineCachePort.getDateTimeline(userUuid, date)).thenReturn(Optional.of(cached));
+
+        DateTimeline result = dateTimelineService.getDateTimeline(userUuid, date);
+
+        assertThat(result).isEqualTo(cached);
+        verify(diaryVideoPersistencePort, never()).findByUserUuidAndCreatedAtRange(any(), any(), any());
+        verifyNoInteractions(videoMetadataEnrichmentPort);
     }
 }

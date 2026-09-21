@@ -2,6 +2,7 @@ package com.plip.diary.adapter.in.web;
 
 import com.plip.diary.adapter.out.persistence.theme.DiaryThemePersistenceAdapter;
 import com.plip.diary.adapter.out.persistence.video.DiaryVideoPersistenceAdapter;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.VideoMetadata;
 import com.plip.diary.application.port.out.VideoServicePort;
 import com.plip.diary.domain.model.DiaryTheme;
@@ -21,7 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -55,11 +58,15 @@ class HomeFeedControllerTest {
     @MockitoBean
     private VideoServicePort videoMetadataEnrichmentPort;
 
+    @MockitoBean
+    private DiaryTimelineCachePort diaryTimelineCachePort;
+
     private UUID userUuid;
 
     @BeforeEach
     void setUp() {
         userUuid = UUID.randomUUID();
+        when(diaryTimelineCachePort.getHomeFeedSections(any())).thenReturn(Optional.empty());
     }
 
     @Test

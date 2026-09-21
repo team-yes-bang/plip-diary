@@ -2,6 +2,7 @@ package com.plip.diary.application.service;
 
 import com.plip.diary.application.port.in.dto.ThemeTimelinePage;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.VideoMetadata;
 import com.plip.diary.application.port.out.VideoServicePort;
@@ -9,6 +10,7 @@ import com.plip.diary.domain.model.DiaryTheme;
 import com.plip.diary.domain.model.DiaryVideo;
 import com.plip.diary.global.exception.ThemeNotFoundException;
 import com.plip.diary.global.pagination.TimelineCursor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,6 +24,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.lenient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,8 +50,17 @@ class ThemeTimelineServiceTest {
     @Mock
     private VideoServicePort videoMetadataEnrichmentPort;
 
+    @Mock
+    private DiaryTimelineCachePort diaryTimelineCachePort;
+
     @InjectMocks
     private ThemeTimelineService themeTimelineService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(diaryTimelineCachePort.getThemeTimeline(any(), anyLong(), any(), anyInt()))
+                .thenReturn(Optional.empty());
+    }
 
     @Test
     void getThemeTimeline_throwsWhenThemeNotFound() {

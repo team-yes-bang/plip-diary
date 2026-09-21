@@ -6,14 +6,17 @@ import com.plip.diary.global.exception.ThemeLimitExceededException;
 import com.plip.diary.global.exception.ThemeNameDuplicateException;
 import com.plip.diary.global.exception.ThemeNotFoundException;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.UuidGeneratorPort;
 import com.plip.diary.domain.model.DiaryTheme;
+import com.plip.diary.domain.model.DiaryVideo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,6 +41,12 @@ class ThemeServiceTest {
 
     @Mock
     private UuidGeneratorPort uuidGeneratorPort;
+
+    @Mock
+    private VideoMetadataSyncService videoMetadataSyncService;
+
+    @Mock
+    private DiaryTimelineCachePort diaryTimelineCachePort;
 
     @InjectMocks
     private ThemeService themeService;
@@ -146,9 +155,18 @@ class ThemeServiceTest {
                 .thenReturn(false);
         when(diaryThemePersistencePort.save(any(DiaryTheme.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        DiaryTheme updated = themeService.updateTheme(userUuid, id, "여행");
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            DiaryTheme updated = themeService.updateTheme(userUuid, id, "여행");
 
-        assertThat(updated.getName()).isEqualTo("여행");
+            assertThat(updated.getName()).isEqualTo("여행");
+
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(sync -> sync.afterCommit());
+            verify(diaryTimelineCachePort).evictByUserUuid(userUuid);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     @Test
@@ -185,11 +203,60 @@ class ThemeServiceTest {
         when(diaryThemePersistencePort.findByIdAndUserUuid(id, userUuid))
                 .thenReturn(Optional.of(existing));
         when(diaryThemePersistencePort.countByUserUuid(userUuid)).thenReturn(2L);
+        when(diaryVideoPersistencePort.findByThemeIdAndUserUuid(id, userUuid)).thenReturn(List.of());
 
-        themeService.deleteTheme(userUuid, id);
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            themeService.deleteTheme(userUuid, id);
 
-        verify(diaryVideoPersistencePort).softDeleteAllByThemeId(id);
-        verify(diaryThemePersistencePort).softDelete(id);
+            verify(diaryVideoPersistencePort).softDeleteAllByThemeId(id);
+            verify(diaryThemePersistencePort).softDelete(id);
+
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(sync -> sync.afterCommit());
+
+            verify(videoMetadataSyncService, never()).removeAll(
+                    org.mockito.ArgumentMatchers.any(),
+                    org.mockito.ArgumentMatchers.any()
+            );
+            verify(diaryTimelineCachePort).evictByUserUuid(userUuid);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    void deleteTheme_removesMetadataAfterCommit() {
+        Long id = 1L;
+        UUID videoUuid1 = UUID.randomUUID();
+        UUID videoUuid2 = UUID.randomUUID();
+        DiaryTheme existing = DiaryTheme.reconstitute(id, UUID.randomUUID(), userUuid, "일상",
+                LocalDateTime.now(), LocalDateTime.now(), null);
+        List<DiaryVideo> videos = List.of(
+                DiaryVideo.reconstitute(1L, id, videoUuid1, LocalDateTime.now(), LocalDateTime.now(), null),
+                DiaryVideo.reconstitute(2L, id, videoUuid2, LocalDateTime.now(), LocalDateTime.now(), null)
+        );
+        when(diaryThemePersistencePort.findByIdAndUserUuid(id, userUuid))
+                .thenReturn(Optional.of(existing));
+        when(diaryThemePersistencePort.countByUserUuid(userUuid)).thenReturn(2L);
+        when(diaryVideoPersistencePort.findByThemeIdAndUserUuid(id, userUuid)).thenReturn(videos);
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            themeService.deleteTheme(userUuid, id);
+
+            verify(diaryVideoPersistencePort).softDeleteAllByThemeId(id);
+            verify(diaryThemePersistencePort).softDelete(id);
+            verify(videoMetadataSyncService, never()).removeAll(userUuid, List.of(videoUuid1, videoUuid2));
+
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(sync -> sync.afterCommit());
+
+            verify(videoMetadataSyncService).removeAll(userUuid, List.of(videoUuid1, videoUuid2));
+            verify(diaryTimelineCachePort).evictByUserUuid(userUuid);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     @Test
