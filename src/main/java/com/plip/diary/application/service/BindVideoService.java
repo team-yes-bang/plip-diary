@@ -2,6 +2,7 @@ package com.plip.diary.application.service;
 
 import com.plip.diary.application.port.in.BindVideoUseCase;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.VideoLinkedEventPort;
 import com.plip.diary.domain.model.DiaryTheme;
@@ -25,6 +26,7 @@ public class BindVideoService implements BindVideoUseCase {
     private final DiaryThemePersistencePort diaryThemePersistencePort;
     private final DiaryVideoPersistencePort diaryVideoPersistencePort;
     private final VideoLinkedEventPort videoLinkedEventPort;
+    private final DiaryTimelineCachePort diaryTimelineCachePort;
 
     @Override
     @Transactional
@@ -60,6 +62,7 @@ public class BindVideoService implements BindVideoUseCase {
             @Override
             public void afterCommit() {
                 videoLinkedEventPort.publish(videoUuid);
+                diaryTimelineCachePort.evictByUserUuid(userUuid);
             }
         });
         return true;

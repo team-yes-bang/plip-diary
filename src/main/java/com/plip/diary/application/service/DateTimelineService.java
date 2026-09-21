@@ -7,6 +7,7 @@ import com.plip.diary.application.port.in.dto.DateTimelineVideo;
 import com.plip.diary.application.port.in.dto.DateWindowDay;
 import com.plip.diary.application.port.in.dto.DateWindowTimeline;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.VideoMetadata;
 import com.plip.diary.application.port.out.VideoServicePort;
@@ -21,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -31,19 +33,29 @@ public class DateTimelineService implements GetDateTimelineUseCase {
     private final DiaryVideoPersistencePort diaryVideoPersistencePort;
     private final DiaryThemePersistencePort diaryThemePersistencePort;
     private final VideoServicePort videoMetadataEnrichmentPort;
+    private final DiaryTimelineCachePort diaryTimelineCachePort;
 
     @Override
     public DateTimeline getDateTimeline(UUID userUuid, LocalDate date) {
+        Optional<DateTimeline> cached = diaryTimelineCachePort.getDateTimeline(userUuid, date);
+        if (cached.isPresent()) {
+            return cached.get();
+        }
+
         LocalDateTime start = KstDateTimes.startOfDay(date);
         LocalDateTime end = KstDateTimes.startOfNextDay(date);
 
         List<DiaryVideo> videos = diaryVideoPersistencePort.findByUserUuidAndCreatedAtRange(userUuid, start, end);
         if (videos.isEmpty()) {
-            return new DateTimeline(date, List.of());
+            DateTimeline empty = new DateTimeline(date, List.of());
+            diaryTimelineCachePort.putDateTimeline(userUuid, date, empty);
+            return empty;
         }
 
         List<DateTimelineSection> sections = buildSectionsForDate(userUuid, date, videos);
-        return new DateTimeline(date, sections);
+        DateTimeline result = new DateTimeline(date, sections);
+        diaryTimelineCachePort.putDateTimeline(userUuid, date, result);
+        return result;
     }
 
     @Override

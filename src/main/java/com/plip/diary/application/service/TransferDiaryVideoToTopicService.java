@@ -2,6 +2,7 @@ package com.plip.diary.application.service;
 
 import com.plip.diary.application.port.in.TransferDiaryVideoToTopicUseCase;
 import com.plip.diary.application.port.in.VideoTransferMode;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.VideoUnlinkedEventPort;
 import com.plip.diary.domain.model.DiaryVideo;
@@ -29,6 +30,7 @@ public class TransferDiaryVideoToTopicService implements TransferDiaryVideoToTop
     private final DiaryVideoPersistencePort diaryVideoPersistencePort;
     private final VideoUnlinkedEventPort videoUnlinkedEventPort;
     private final VideoMetadataSyncService videoMetadataSyncService;
+    private final DiaryTimelineCachePort diaryTimelineCachePort;
 
     @Override
     @Transactional
@@ -50,6 +52,7 @@ public class TransferDiaryVideoToTopicService implements TransferDiaryVideoToTop
             public void afterCommit() {
                 videoUnlinkedEventPort.publish(videoUuid);
                 videoMetadataSyncService.remove(userUuid, videoUuid);
+                diaryTimelineCachePort.evictByUserUuid(userUuid);
             }
         });
     }

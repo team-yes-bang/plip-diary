@@ -3,6 +3,9 @@ package com.plip.diary.adapter.out.redis;
 import com.plip.diary.application.port.out.VideoMetadata;
 import com.plip.diary.application.port.out.VideoMetadataCachePort;
 import com.plip.diary.global.config.VideoMetadataCacheProperties;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -23,6 +26,16 @@ public class VideoMetadataRedisAdapter implements VideoMetadataCachePort {
     private final StringRedisTemplate stringRedisTemplate;
     private final VideoMetadataCacheProperties videoMetadataCacheProperties;
     private final VideoMetadataCacheSerde videoMetadataCacheSerde;
+    private final MeterRegistry meterRegistry;
+
+    private Counter hitCounter;
+    private Counter missCounter;
+
+    @PostConstruct
+    void initMetrics() {
+        hitCounter = meterRegistry.counter("diary.video.metadata.cache", "result", "hit");
+        missCounter = meterRegistry.counter("diary.video.metadata.cache", "result", "miss");
+    }
 
     static String cacheKey(UUID userUuid, UUID videoUuid) {
         return VideoMetadataCacheKeys.videoMetaKey(userUuid, videoUuid);
@@ -51,6 +64,8 @@ public class VideoMetadataRedisAdapter implements VideoMetadataCachePort {
             UUID videoUuid = videoUuids.get(index);
             result.put(videoUuid, videoMetadataCacheSerde.deserialize(videoUuid, cachedValue));
         }
+        hitCounter.increment(result.size());
+        missCounter.increment(videoUuids.size() - result.size());
         return result;
     }
 

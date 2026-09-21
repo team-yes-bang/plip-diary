@@ -5,6 +5,7 @@ import com.plip.diary.application.port.in.dto.HomeFeed;
 import com.plip.diary.application.port.in.dto.HomeFeedSection;
 import com.plip.diary.application.port.in.dto.HomeFeedVideo;
 import com.plip.diary.application.port.out.DiaryThemePersistencePort;
+import com.plip.diary.application.port.out.DiaryTimelineCachePort;
 import com.plip.diary.application.port.out.DiaryVideoPersistencePort;
 import com.plip.diary.application.port.out.VideoMetadata;
 import com.plip.diary.application.port.out.VideoServicePort;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -35,9 +37,17 @@ public class HomeFeedService implements GetHomeFeedUseCase {
     private final DiaryVideoPersistencePort diaryVideoPersistencePort;
     private final DiaryThemePersistencePort diaryThemePersistencePort;
     private final VideoServicePort videoMetadataEnrichmentPort;
+    private final DiaryTimelineCachePort diaryTimelineCachePort;
 
     @Override
     public HomeFeed getHomeFeed(UUID userUuid) {
+        List<DiaryTheme> themes = diaryThemePersistencePort.findAllByUserUuid(userUuid);
+
+        Optional<List<HomeFeedSection>> cached = diaryTimelineCachePort.getHomeFeedSections(userUuid);
+        if (cached.isPresent()) {
+            return new HomeFeed(cached.get(), themes);
+        }
+
         LocalDate today = KstDateTimes.today();
         LocalDateTime start = KstDateTimes.startOfDay(today.minusDays(LOOKBACK_DAYS - 1L));
         LocalDateTime end = KstDateTimes.startOfTomorrow();
@@ -55,12 +65,13 @@ public class HomeFeedService implements GetHomeFeedUseCase {
                 .limit(SECTION_COUNT - 1L)
                 .forEach(sectionDates::add);
 
-        List<DiaryTheme> themes = diaryThemePersistencePort.findAllByUserUuid(userUuid);
         Map<Long, DiaryTheme> themeById = themes.stream()
                 .collect(Collectors.toMap(DiaryTheme::getId, Function.identity()));
 
         if (sectionDates.size() == 1 && videosByDate.getOrDefault(today, List.of()).isEmpty()) {
-            return new HomeFeed(List.of(new HomeFeedSection(today, List.of())), themes);
+            List<HomeFeedSection> emptySections = List.of(new HomeFeedSection(today, List.of()));
+            diaryTimelineCachePort.putHomeFeedSections(userUuid, emptySections);
+            return new HomeFeed(emptySections, themes);
         }
 
         List<DiaryVideo> selectedVideos = sectionDates.stream()
@@ -83,6 +94,7 @@ public class HomeFeedService implements GetHomeFeedUseCase {
                 ))
                 .toList();
 
+        diaryTimelineCachePort.putHomeFeedSections(userUuid, sections);
         return new HomeFeed(sections, themes);
     }
 
